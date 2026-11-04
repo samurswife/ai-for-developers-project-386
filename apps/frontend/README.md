@@ -20,6 +20,16 @@ mise run dev:frontend
 
 Откройте `http://127.0.0.1:5173`. Для остановки сервера нажмите `Ctrl+C`.
 
+Для фонового запуска обоих серверов через mise:
+
+```sh
+mise daemons start frontend
+mise daemons status
+mise daemons logs backend -n 20
+mise daemons logs frontend -n 20
+mise daemons stop
+```
+
 ## Подключение backend
 
 Vite проксирует `/api` к `http://127.0.0.1:3000` в dev-режиме и локальном preview. Для другого адреса backend:

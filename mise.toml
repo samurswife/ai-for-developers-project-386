@@ -17,8 +17,21 @@ rumdl = "0.3.2"
 "github:agent-sh/agnix" = "0.60.3"
 
 [tasks.setup]
-description = "Установить зависимости workspace по lockfile и Chromium для тестов"
-run = ["pnpm install --frozen-lockfile", { task = "setup:browsers" }]
+description = "Установить зависимости по lockfile, Chromium и Git-хуки"
+run = ["pnpm install --frozen-lockfile", { task = "setup:browsers" }, "hk install --mise"]
+
+[daemons.backend]
+task = "dev:backend"
+ready_port = 3000
+
+[daemons.frontend]
+task = "dev:frontend"
+depends = ["backend"]
+ready_port = 5173
+
+[tasks.check]
+description = "Выполнить все проверки проекта"
+depends = ["lint", "typecheck", "test", "verify:contract", "scan:secrets", "scan:vulnerabilities"]
 
 [tasks."setup:browsers"]
 description = "Установить Chromium для браузерного дымового теста"

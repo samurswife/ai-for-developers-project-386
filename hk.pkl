@@ -1,0 +1,23 @@
+amends "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Config.pkl"
+
+hooks {
+  ["pre-commit"] {
+    fix = false
+    stage = false
+    stash = "none"
+    steps {
+      ["check"] {
+        check = "mise run check"
+      }
+    }
+  }
+  ["commit-msg"] {
+    steps {
+      ["commitlint"] {
+        check = new Command {
+          argv = List("mise", "exec", "--", "pnpm", "exec", "commitlint", "--edit", "{{commit_msg_file}}")
+        }
+      }
+    }
+  }
+}
