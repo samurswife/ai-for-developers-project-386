@@ -1,0 +1,9 @@
+packages:
+  - apps/*
+  - packages/*
+  - specs
+  - tools/*
+
+saveExact: true
+engineStrict: true
+strictPeerDependencies: true

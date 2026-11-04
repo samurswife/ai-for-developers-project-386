@@ -1,1 +1,14 @@
-.idea
+.idea/
+.DS_Store
+node_modules/
+dist/
+coverage/
+.cache/
+*.log
+.env
+.env.*
+!.env.example
+mise.local.toml
+mise.local.lock
+/specs/generated/
+/packages/api-sdk/src/generated/

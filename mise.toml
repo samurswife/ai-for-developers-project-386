@@ -1,0 +1,34 @@
+min_version = "2026.10.25"
+
+[settings]
+experimental = true
+
+[tools]
+node = "26.13.0"
+pnpm = "12.16.1"
+hk = "2.11.1"
+pkl = "0.32.2"
+pitchfork = "2.33.1"
+
+[tasks.setup]
+description = "Установить зависимости workspace по lockfile"
+run = "pnpm install --frozen-lockfile"
+
+[tasks.generate]
+description = "Сгенерировать OpenAPI, SDK и типы методов NestJS"
+run = "pnpm run generate"
+
+[tasks."build:sdk"]
+description = "Сгенерировать и собрать SDK"
+depends = ["generate"]
+run = "pnpm run build:sdk"
+
+[tasks.typecheck]
+description = "Проверить типы пакетов workspace"
+depends = ["build:sdk"]
+run = "pnpm run typecheck"
+
+[tasks."verify:contract"]
+description = "Проверить цепочку генерации и HTTP-вызов SDK"
+depends = ["build:sdk"]
+run = "pnpm run verify:contract"

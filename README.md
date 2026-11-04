@@ -98,12 +98,47 @@ API разрабатывается на основе TypeSpec-контракта
 
 ## Установка
 
+Окружение управляется [mise](https://mise.jdx.dev/). Используемая версия mise — `2026.10.25`; версии Node.js, pnpm, hk, Pkl и pitchfork закреплены в `mise.toml`, ссылки и контрольные суммы для macOS ARM64 и Linux x64 — в `mise.lock`.
+
 ```bash
 git clone https://github.com/samurswife/ai-for-developers-project-386.git
 cd ai-for-developers-project-386
+mise trust
+mise --locked install
+mise run setup
 ```
 
+`setup` устанавливает зависимости всех пакетов через `pnpm install --frozen-lockfile`. Зависимости добавляются точными версиями; для всего workspace используется один корневой `pnpm-lock.yaml`.
+
+## Структура репозитория
+
+| Каталог | Назначение |
+|---|---|
+| `apps/backend/` | Место для NestJS-приложения, создаётся на следующем шаге |
+| `apps/frontend/` | Место для React + Vite + shadcn/ui, создаётся после backend |
+| `specs/` | TypeSpec-контракт и генерация OpenAPI 3.1 |
+| `packages/api-sdk/` | Генерация и сборка TypeScript SDK и типов методов NestJS |
+| `tools/contract-probe/` | Техническая проверка контракта, компиляции контроллера и HTTP-вызова SDK |
+
+Будущие приложения включены в шаблоны `apps/*` в `pnpm-workspace.yaml`. Пакеты ссылаются друг на друга через `workspace:*`.
+
 ## Использование
+
+На текущем шаге доступны команды:
+
+| Команда | Назначение |
+|---|---|
+| `mise run setup` | Установка зависимостей по lockfile |
+| `mise run generate` | TypeSpec → OpenAPI → SDK и сигнатуры методов NestJS |
+| `mise run build:sdk` | Генерация и сборка SDK с декларациями типов |
+| `mise run typecheck` | Генерация, сборка SDK и проверка типов пакетов |
+| `mise run verify:contract` | Генерация, сборка и проверка SDK по HTTP |
+
+Проверка `verify:contract` открывает временный порт на `127.0.0.1` и закрывает его после выполнения. Подробности и ограничения генератора — в [отчёте технической пробы](tools/contract-probe/README.md).
+
+TypeScript закреплён на `6.0.3`: проверенная версия генератора Hey API несовместима с compiler API TypeScript 7. Сгенерированные файлы и сборки воспроизводятся командами и исключены из Git.
+
+Поддержка daemons включена через `experimental = true`, pitchfork установлен как инструмент проекта. Описания серверов, Git-хуки, линтеры, общая команда `check` и CI приложения добавляются на следующих согласованных шагах.
 
 ---
 
