@@ -106,7 +106,12 @@ depends = [
   "lint:generated",
   "lint:typespec",
   "lint:workflows",
+  "lint:agents",
 ]
+
+[tasks."lint:agents"]
+description = "Проверить AGENTS.md через Agnix"
+run = "pnpm run lint:agents"
 
 [tasks."lint:workflows"]
 description = "Проверить workflow проекта через Jactionlint"

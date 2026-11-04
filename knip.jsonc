@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/knip/schema-jsonc.json",
   // Native binaries are installed and pinned by mise.
-  "ignoreBinaries": ["vacuum", "rumdl", "betterleaks", "osv-scanner", "jactionlint"],
+  "ignoreBinaries": ["vacuum", "rumdl", "betterleaks", "osv-scanner", "jactionlint", "agnix"],
   "workspaces": {
     "specs": {
       // Knip does not parse TypeSpec imports or emitter settings.

@@ -100,7 +100,7 @@ API разрабатывается на основе TypeSpec-контракта
 
 ## Установка
 
-Окружение управляется [mise](https://mise.jdx.dev/). Используемая версия mise — `2026.10.25`; версии Node.js, pnpm, hk, Pkl и pitchfork закреплены в `mise.toml`, ссылки и контрольные суммы для macOS ARM64 и Linux x64 — в `mise.lock`.
+Для управления окружением используется [mise](https://mise.jdx.dev/). Версии инструментов закреплены в проекте.
 
 ```bash
 git clone https://github.com/samurswife/ai-for-developers-project-386.git
@@ -110,50 +110,46 @@ mise --locked install
 mise run setup
 ```
 
-`setup` устанавливает зависимости всех пакетов через `pnpm install --frozen-lockfile` и Chromium Headless Shell для браузерного теста. Зависимости добавляются точными версиями; для всего workspace используется один корневой `pnpm-lock.yaml`.
-
 ## Структура репозитория
 
 | Каталог | Назначение |
 |---|---|
-| `apps/backend/` | NestJS backend с техническим endpoint `/api/health` |
-| `apps/frontend/` | React + Vite + shadcn/ui, проверка соединения с backend через SDK |
-| `specs/` | TypeSpec-контракт и генерация OpenAPI 3.1 |
-| `packages/api-sdk/` | Генерация и сборка TypeScript SDK и типов методов NestJS |
-| `tools/contract-probe/` | Техническая проверка контракта, компиляции контроллера и HTTP-вызова SDK |
-| `tools/smoke-tests/` | Браузерный дымовой тест frontend и backend на Vitest и Playwright |
-
-Пакеты workspace перечислены в `pnpm-workspace.yaml` и ссылаются друг на друга через `workspace:*`.
+| `apps/backend/` | Backend на NestJS |
+| `apps/frontend/` | Frontend на React и Vite |
+| `specs/` | Контракт API на TypeSpec |
+| `packages/api-sdk/` | Клиентский SDK и серверные типы |
+| `tools/contract-probe/` | Проверка генерации API |
+| `tools/smoke-tests/` | Браузерный дымовой тест |
 
 ## Использование
 
 | Команда | Назначение |
 |---|---|
-| `mise run setup` | Установка зависимостей по lockfile и Chromium для тестов |
+| `mise run setup` | Установка зависимостей, Chromium и Git-хуков |
 | `mise run setup:browsers` | Установка Chromium и системных зависимостей браузера |
-| `mise run generate` | TypeSpec → OpenAPI → SDK и сигнатуры методов NestJS |
-| `mise run build:sdk` | Генерация и сборка SDK с декларациями типов |
-| `mise run build:backend` | Генерация контракта, сборка SDK и backend |
+| `mise run generate` | Обновление OpenAPI, SDK и серверных типов |
+| `mise run build:sdk` | Сборка SDK |
+| `mise run build:backend` | Сборка backend |
 | `mise run dev:backend` | Запуск backend с перезапуском при изменениях |
 | `mise run start:backend` | Сборка и запуск production-версии backend |
-| `mise run build:frontend` | Генерация контракта, сборка SDK и frontend |
+| `mise run build:frontend` | Сборка frontend |
 | `mise run dev:frontend` | Запуск frontend с горячим обновлением |
 | `mise run preview:frontend` | Сборка и локальный просмотр production-версии frontend |
-| `mise run typecheck` | Генерация, сборка SDK и проверка типов пакетов |
-| `mise run test` | Сборка приложений и браузерный дымовой тест frontend и backend |
-| `mise run verify:contract` | Генерация, сборка и проверка SDK по HTTP |
+| `mise run typecheck` | Проверка типов |
+| `mise run test` | Браузерный дымовой тест frontend и backend |
+| `mise run verify:contract` | Проверка генерации API и SDK |
+| `mise run lint` | Линтеры |
+| `mise run check` | Все проверки проекта |
 
-Проверка `verify:contract` открывает временный порт на `127.0.0.1` и закрывает его после выполнения. Подробнее — в [описании проверки контракта](tools/contract-probe/README.md).
+Запустите `mise run dev:backend` и `mise run dev:frontend` в отдельных терминалах.
+Откройте `http://127.0.0.1:5173`; backend доступен на `http://127.0.0.1:3000`.
+Для остановки серверов нажмите `Ctrl+C` в каждом терминале.
 
-`mise run test` запускает собранные frontend и backend на свободных локальных портах. Chromium открывает страницу, нажимает «Проверить соединение» и проверяет сообщение «Сервер доступен.». HTTP-ответ, полученный страницей через SDK и Vite proxy, проверяется по OpenAPI-схеме. Браузер и серверы автоматически завершаются после теста.
+Настройка портов и фонового запуска описана в инструкциях
+[backend](apps/backend/README.md) и [frontend](apps/frontend/README.md).
+Отдельные проверки перечислены в [инструкции по проверкам качества](tools/quality/README.md).
 
-Backend запускается командой `mise run dev:backend` и доступен по адресу `http://127.0.0.1:3000`. Запрос `GET /api/health` возвращает HTTP 200 и `{"status":"ok"}`. Для остановки нажмите `Ctrl+C`. Порт можно изменить переменной окружения: `PORT=3001 mise run dev:backend`.
-
-В отдельном терминале запустите `mise run dev:frontend` и откройте `http://127.0.0.1:5173`. Кнопка «Проверить соединение» вызывает backend через сгенерированный SDK и показывает результат запроса. Vite проксирует `/api` к `http://127.0.0.1:3000`. Адрес backend можно изменить переменной `BACKEND_URL`. Инструкции пакета — в [apps/frontend/README.md](apps/frontend/README.md).
-
-Контроллер backend использует тип ответа и сигнатуру метода, сгенерированные из TypeSpec. Инструкции пакета — в [apps/backend/README.md](apps/backend/README.md).
-
-TypeScript закреплён на `6.0.3`: генератор Hey API `0.99.0` несовместим с compiler API TypeScript 7. Сгенерированные файлы и сборки воспроизводятся командами и исключены из Git.
+При обновлении TypeScript учитывайте ограничение: используемый генератор Hey API несовместим с TypeScript 7.
 
 ---
 

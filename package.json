@@ -27,7 +27,8 @@
     "scan:vulnerabilities": "osv-scanner scan source --lockfile pnpm-lock.yaml",
     "lint:generated": "node tools/quality/check-generated.mjs",
     "lint:typespec": "pnpm --filter @calendar/contract exec tsp format --check main.tsp",
-    "lint:workflows": "jactionlint --strict-exit .github/workflows/check.yml"
+    "lint:workflows": "jactionlint --strict-exit .github/workflows/check.yml",
+    "lint:agents": "agnix --strict --target codex AGENTS.md"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.4",

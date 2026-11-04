@@ -1,7 +1,6 @@
 # Проверки качества
 
-Команды запускаются из корня репозитория через mise. Версии CLI закреплены в `mise.toml` и `mise.lock`,
-версии npm-пакетов — в манифестах и `pnpm-lock.yaml`.
+Команды выполняются из корня репозитория.
 
 Все проверки: `mise run check`. Для работы нужны Chromium (`mise run setup:browsers`) и доступ к сети для OSV.
 `mise run setup` устанавливает зависимости, Chromium и Git-хуки hk. Для отдельной установки хуков:
@@ -25,16 +24,11 @@ GitHub Actions запускает `mise run setup` и `mise run check` на ка
 | `mise run lint:generated` | Сравнение OpenAPI и SDK с независимой повторной генерацией |
 | `mise run lint:markdown` | Rumdl: Markdown в каталогах приложений, пакетов и инструментов |
 | `mise run lint:workflows` | Jactionlint: workflow проверок проекта |
+| `mise run lint:agents` | Agnix: инструкции в AGENTS.md |
 | `mise run scan:secrets` | Betterleaks: секреты в файлах с редактированием значений в отчёте |
 | `mise run scan:vulnerabilities` | OSV Scanner: уязвимости зависимостей из lockfile; нужен доступ к сети |
-
-Сканеры также доступны отдельными командами. При находках они возвращают ненулевой код завершения.
-`scan:secrets` проверяет рабочие файлы, без истории Git и установленных или сгенерированных зависимостей.
 
 Для обновления сгенерированных файлов используйте `mise run generate`, для проверки типов — `mise run typecheck`.
 
 `lint:commits` проверяет коммиты. Для проверки отдельного сообщения:
 `printf '%s\n' 'feat: описание' | mise exec -- pnpm exec commitlint`.
-
-Agnix закреплён в mise для проверки инструкций агента:
-`mise exec -- agnix --strict --target codex <AGENTS.md>`.
