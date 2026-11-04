@@ -28,6 +28,21 @@ description = "Проверить типы пакетов workspace"
 depends = ["build:sdk"]
 run = "pnpm run typecheck"
 
+[tasks."build:backend"]
+description = "Сгенерировать контракт, собрать SDK и backend"
+depends = ["build:sdk"]
+run = "pnpm run build:backend"
+
+[tasks."dev:backend"]
+description = "Запустить backend с перезапуском при изменениях"
+depends = ["build:sdk"]
+run = "pnpm run dev:backend"
+
+[tasks."start:backend"]
+description = "Собрать и запустить production-сборку backend"
+depends = ["build:backend"]
+run = "pnpm run start:backend"
+
 [tasks."verify:contract"]
 description = "Проверить цепочку генерации и HTTP-вызов SDK"
 depends = ["build:sdk"]

@@ -9,6 +9,9 @@
   "scripts": {
     "generate": "pnpm --filter @calendar/contract run generate && pnpm --filter @calendar/api-sdk run generate",
     "build:sdk": "pnpm --filter @calendar/api-sdk run build",
+    "build:backend": "pnpm --filter @calendar/backend run build",
+    "dev:backend": "pnpm --filter @calendar/backend run start:dev",
+    "start:backend": "pnpm --filter @calendar/backend run start:prod",
     "typecheck": "pnpm -r --if-present run typecheck",
     "verify:contract": "pnpm --filter @calendar/contract-probe run verify"
   }

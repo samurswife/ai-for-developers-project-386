@@ -114,31 +114,33 @@ mise run setup
 
 | Каталог | Назначение |
 |---|---|
-| `apps/backend/` | Место для NestJS-приложения, создаётся на следующем шаге |
-| `apps/frontend/` | Место для React + Vite + shadcn/ui, создаётся после backend |
+| `apps/backend/` | NestJS backend с техническим endpoint `/api/health` |
 | `specs/` | TypeSpec-контракт и генерация OpenAPI 3.1 |
 | `packages/api-sdk/` | Генерация и сборка TypeScript SDK и типов методов NestJS |
 | `tools/contract-probe/` | Техническая проверка контракта, компиляции контроллера и HTTP-вызова SDK |
 
-Будущие приложения включены в шаблоны `apps/*` в `pnpm-workspace.yaml`. Пакеты ссылаются друг на друга через `workspace:*`.
+Пакеты workspace перечислены в `pnpm-workspace.yaml` и ссылаются друг на друга через `workspace:*`.
 
 ## Использование
-
-На текущем шаге доступны команды:
 
 | Команда | Назначение |
 |---|---|
 | `mise run setup` | Установка зависимостей по lockfile |
 | `mise run generate` | TypeSpec → OpenAPI → SDK и сигнатуры методов NestJS |
 | `mise run build:sdk` | Генерация и сборка SDK с декларациями типов |
+| `mise run build:backend` | Генерация контракта, сборка SDK и backend |
+| `mise run dev:backend` | Запуск backend с перезапуском при изменениях |
+| `mise run start:backend` | Сборка и запуск production-версии backend |
 | `mise run typecheck` | Генерация, сборка SDK и проверка типов пакетов |
 | `mise run verify:contract` | Генерация, сборка и проверка SDK по HTTP |
 
-Проверка `verify:contract` открывает временный порт на `127.0.0.1` и закрывает его после выполнения. Подробности и ограничения генератора — в [отчёте технической пробы](tools/contract-probe/README.md).
+Проверка `verify:contract` открывает временный порт на `127.0.0.1` и закрывает его после выполнения. Подробнее — в [описании проверки контракта](tools/contract-probe/README.md).
 
-TypeScript закреплён на `6.0.3`: проверенная версия генератора Hey API несовместима с compiler API TypeScript 7. Сгенерированные файлы и сборки воспроизводятся командами и исключены из Git.
+Backend запускается командой `mise run dev:backend` и доступен по адресу `http://127.0.0.1:3000`. Запрос `GET /api/health` возвращает HTTP 200 и `{"status":"ok"}`. Для остановки нажмите `Ctrl+C`. Порт можно изменить переменной окружения: `PORT=3001 mise run dev:backend`.
 
-Поддержка daemons включена через `experimental = true`, pitchfork установлен как инструмент проекта. Описания серверов, Git-хуки, линтеры, общая команда `check` и CI приложения добавляются на следующих согласованных шагах.
+Контроллер backend использует тип ответа и сигнатуру метода, сгенерированные из TypeSpec. Инструкции пакета — в [apps/backend/README.md](apps/backend/README.md).
+
+TypeScript закреплён на `6.0.3`: генератор Hey API `0.99.0` несовместим с compiler API TypeScript 7. Сгенерированные файлы и сборки воспроизводятся командами и исключены из Git.
 
 ---
 
