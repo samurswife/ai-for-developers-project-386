@@ -33,19 +33,14 @@ curl http://127.0.0.1:3000/api/health
 
 Ответ: HTTP 200, `Content-Type: application/json`, тело `{"status":"ok"}`.
 
-Контракт хранится в `specs/main.tsp`. `HealthController` реализует сгенерированный `HealthControllerMethods`, ответ типизирован сгенерированным `GetHealthResponse`. Оба типа импортируются из workspace-пакета `@calendar/api-sdk`; runtime-импорт SDK в backend не требуется.
+Контракт хранится в `specs/main.tsp`. Типы методов контроллеров и ответов генерируются из него и доступны в workspace-пакете `@calendar/api-sdk`.
 
 ## Проверки
 
 ```sh
 mise run typecheck
+mise run test
 mise run verify:contract
 ```
 
-`typecheck` включает backend и остальные TypeScript-пакеты. `verify:contract` проверяет генерацию, компиляцию заготовки контроллера и SDK с временным HTTP-сервером.
-
-## Устройство
-
-- `src/main.ts` запускает приложение и подключает корректное завершение по сигналам.
-- `src/app.module.ts` регистрирует контроллер.
-- `src/health.controller.ts` отвечает на технический запрос запуска.
+`typecheck` включает backend и остальные TypeScript-пакеты. `test` собирает оба приложения и проверяет соединение frontend с backend в Chromium, включая соответствие HTTP-ответа OpenAPI-схеме. `verify:contract` проверяет генерацию, компиляцию заготовки контроллера и SDK с тестовым HTTP-сервером.

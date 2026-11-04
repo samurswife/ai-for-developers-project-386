@@ -11,8 +11,12 @@ pkl = "0.32.2"
 pitchfork = "2.33.1"
 
 [tasks.setup]
-description = "Установить зависимости workspace по lockfile"
-run = "pnpm install --frozen-lockfile"
+description = "Установить зависимости workspace по lockfile и Chromium для тестов"
+run = ["pnpm install --frozen-lockfile", { task = "setup:browsers" }]
+
+[tasks."setup:browsers"]
+description = "Установить Chromium для браузерного дымового теста"
+run = "pnpm --filter @calendar/smoke-tests exec playwright install --with-deps --only-shell chromium"
 
 [tasks.generate]
 description = "Сгенерировать OpenAPI, SDK и типы методов NestJS"
@@ -62,3 +66,8 @@ run = "pnpm run dev:frontend"
 description = "Собрать и запустить локальный сервер production-версии frontend"
 depends = ["build:frontend"]
 run = "pnpm run preview:frontend"
+
+[tasks.test]
+description = "Собрать приложения и выполнить браузерный дымовой тест"
+depends = ["build:backend", "build:frontend"]
+run = "pnpm run test"

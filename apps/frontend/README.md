@@ -19,8 +19,6 @@ mise run dev:frontend
 
 Откройте `http://127.0.0.1:5173`. Для остановки сервера нажмите `Ctrl+C`.
 
-Кнопка «Проверить соединение» отправляет `GET /api/health` через пакет `@calendar/api-sdk`. Во время запроса кнопка заблокирована. При ответе `{"status":"ok"}` появляется сообщение «Сервер доступен.», при ошибке или превышении пяти секунд — предложение повторить проверку.
-
 ## Подключение backend
 
 Vite проксирует `/api` к `http://127.0.0.1:3000` в dev-режиме и локальном preview. Для другого адреса backend:
@@ -36,7 +34,10 @@ BACKEND_URL=http://127.0.0.1:3001 mise run dev:frontend
 ```sh
 mise run build:frontend
 mise run typecheck
+mise run test
 ```
+
+`test` проверяет соединение frontend с backend в Chromium и соответствие ответа OpenAPI-контракту.
 
 Production-сборка находится в `apps/frontend/dist/`. Для её локального просмотра при работающем backend:
 
@@ -46,13 +47,9 @@ mise run preview:frontend
 
 Откройте `http://127.0.0.1:4173`.
 
-## Устройство
+## UI-компоненты
 
-- `src/App.tsx` содержит страницу и состояния проверки соединения.
-- `src/components/ui/` содержит компоненты shadcn/ui.
-- `src/index.css` подключает Tailwind CSS и тему shadcn/ui.
-- `components.json` задаёт настройки генерации UI-компонентов.
-- `vite.config.ts` задаёт alias `@/`, плагины и proxy для API.
+Компоненты shadcn/ui хранятся в `src/components/ui/`, настройки генерации — в `components.json`, тема — в `src/index.css`.
 
 Добавить компонент shadcn/ui можно закреплённой версией CLI:
 

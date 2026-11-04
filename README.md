@@ -110,7 +110,7 @@ mise --locked install
 mise run setup
 ```
 
-`setup` устанавливает зависимости всех пакетов через `pnpm install --frozen-lockfile`. Зависимости добавляются точными версиями; для всего workspace используется один корневой `pnpm-lock.yaml`.
+`setup` устанавливает зависимости всех пакетов через `pnpm install --frozen-lockfile` и Chromium Headless Shell для браузерного теста. Зависимости добавляются точными версиями; для всего workspace используется один корневой `pnpm-lock.yaml`.
 
 ## Структура репозитория
 
@@ -121,6 +121,7 @@ mise run setup
 | `specs/` | TypeSpec-контракт и генерация OpenAPI 3.1 |
 | `packages/api-sdk/` | Генерация и сборка TypeScript SDK и типов методов NestJS |
 | `tools/contract-probe/` | Техническая проверка контракта, компиляции контроллера и HTTP-вызова SDK |
+| `tools/smoke-tests/` | Браузерный дымовой тест frontend и backend на Vitest и Playwright |
 
 Пакеты workspace перечислены в `pnpm-workspace.yaml` и ссылаются друг на друга через `workspace:*`.
 
@@ -128,7 +129,8 @@ mise run setup
 
 | Команда | Назначение |
 |---|---|
-| `mise run setup` | Установка зависимостей по lockfile |
+| `mise run setup` | Установка зависимостей по lockfile и Chromium для тестов |
+| `mise run setup:browsers` | Установка Chromium и системных зависимостей браузера |
 | `mise run generate` | TypeSpec → OpenAPI → SDK и сигнатуры методов NestJS |
 | `mise run build:sdk` | Генерация и сборка SDK с декларациями типов |
 | `mise run build:backend` | Генерация контракта, сборка SDK и backend |
@@ -138,9 +140,12 @@ mise run setup
 | `mise run dev:frontend` | Запуск frontend с горячим обновлением |
 | `mise run preview:frontend` | Сборка и локальный просмотр production-версии frontend |
 | `mise run typecheck` | Генерация, сборка SDK и проверка типов пакетов |
+| `mise run test` | Сборка приложений и браузерный дымовой тест frontend и backend |
 | `mise run verify:contract` | Генерация, сборка и проверка SDK по HTTP |
 
 Проверка `verify:contract` открывает временный порт на `127.0.0.1` и закрывает его после выполнения. Подробнее — в [описании проверки контракта](tools/contract-probe/README.md).
+
+`mise run test` запускает собранные frontend и backend на свободных локальных портах. Chromium открывает страницу, нажимает «Проверить соединение» и проверяет сообщение «Сервер доступен.». HTTP-ответ, полученный страницей через SDK и Vite proxy, проверяется по OpenAPI-схеме. Браузер и серверы автоматически завершаются после теста.
 
 Backend запускается командой `mise run dev:backend` и доступен по адресу `http://127.0.0.1:3000`. Запрос `GET /api/health` возвращает HTTP 200 и `{"status":"ok"}`. Для остановки нажмите `Ctrl+C`. Порт можно изменить переменной окружения: `PORT=3001 mise run dev:backend`.
 

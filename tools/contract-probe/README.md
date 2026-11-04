@@ -12,11 +12,6 @@ mise run verify:contract
 
 Команда генерирует контракт, собирает SDK и проверяет `GET /api/health`: HTTP 200 и JSON `{"status":"ok"}`. Тестовый сервер использует свободный порт на `127.0.0.1` и автоматически завершается.
 
-## Файлы
-
-- `specs/` содержит TypeSpec-контракт и настройки генерации OpenAPI.
-- `packages/api-sdk/` содержит генератор и публичные экспорты SDK.
-- `fixtures/health.controller.ts` проверяет совместимость типов контроллера с контрактом.
-- `verify.mjs` проверяет OpenAPI и HTTP-вызов SDK.
+Контракт хранится в `specs/`, генератор SDK — в `packages/api-sdk/`.
 
 Генерируемые файлы и сборки исключены из Git. Для их обновления используйте `mise run generate` или `mise run build:sdk`.
