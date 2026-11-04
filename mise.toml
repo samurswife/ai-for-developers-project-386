@@ -47,3 +47,18 @@ run = "pnpm run start:backend"
 description = "Проверить цепочку генерации и HTTP-вызов SDK"
 depends = ["build:sdk"]
 run = "pnpm run verify:contract"
+
+[tasks."build:frontend"]
+description = "Сгенерировать контракт, собрать SDK и frontend"
+depends = ["build:sdk"]
+run = "pnpm run build:frontend"
+
+[tasks."dev:frontend"]
+description = "Запустить frontend с горячим обновлением"
+depends = ["build:sdk"]
+run = "pnpm run dev:frontend"
+
+[tasks."preview:frontend"]
+description = "Собрать и запустить локальный сервер production-версии frontend"
+depends = ["build:frontend"]
+run = "pnpm run preview:frontend"

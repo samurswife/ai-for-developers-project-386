@@ -77,6 +77,8 @@
 
 - TypeScript
 - React
+- Vite
+- shadcn/ui
 - NestJS
 - TypeSpec
 - OpenAPI
@@ -115,6 +117,7 @@ mise run setup
 | Каталог | Назначение |
 |---|---|
 | `apps/backend/` | NestJS backend с техническим endpoint `/api/health` |
+| `apps/frontend/` | React + Vite + shadcn/ui, проверка соединения с backend через SDK |
 | `specs/` | TypeSpec-контракт и генерация OpenAPI 3.1 |
 | `packages/api-sdk/` | Генерация и сборка TypeScript SDK и типов методов NestJS |
 | `tools/contract-probe/` | Техническая проверка контракта, компиляции контроллера и HTTP-вызова SDK |
@@ -131,12 +134,17 @@ mise run setup
 | `mise run build:backend` | Генерация контракта, сборка SDK и backend |
 | `mise run dev:backend` | Запуск backend с перезапуском при изменениях |
 | `mise run start:backend` | Сборка и запуск production-версии backend |
+| `mise run build:frontend` | Генерация контракта, сборка SDK и frontend |
+| `mise run dev:frontend` | Запуск frontend с горячим обновлением |
+| `mise run preview:frontend` | Сборка и локальный просмотр production-версии frontend |
 | `mise run typecheck` | Генерация, сборка SDK и проверка типов пакетов |
 | `mise run verify:contract` | Генерация, сборка и проверка SDK по HTTP |
 
 Проверка `verify:contract` открывает временный порт на `127.0.0.1` и закрывает его после выполнения. Подробнее — в [описании проверки контракта](tools/contract-probe/README.md).
 
 Backend запускается командой `mise run dev:backend` и доступен по адресу `http://127.0.0.1:3000`. Запрос `GET /api/health` возвращает HTTP 200 и `{"status":"ok"}`. Для остановки нажмите `Ctrl+C`. Порт можно изменить переменной окружения: `PORT=3001 mise run dev:backend`.
+
+В отдельном терминале запустите `mise run dev:frontend` и откройте `http://127.0.0.1:5173`. Кнопка «Проверить соединение» вызывает backend через сгенерированный SDK и показывает результат запроса. Vite проксирует `/api` к `http://127.0.0.1:3000`. Адрес backend можно изменить переменной `BACKEND_URL`. Инструкции пакета — в [apps/frontend/README.md](apps/frontend/README.md).
 
 Контроллер backend использует тип ответа и сигнатуру метода, сгенерированные из TypeSpec. Инструкции пакета — в [apps/backend/README.md](apps/backend/README.md).
 

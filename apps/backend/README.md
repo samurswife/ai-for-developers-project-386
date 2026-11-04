@@ -13,14 +13,17 @@ mise run dev:backend
 
 Сервер слушает `127.0.0.1:3000`. Для другого порта: `PORT=3001 mise run dev:backend`. Для остановки нажмите `Ctrl+C`.
 
-Production-сборка и запуск:
+Сборка:
 
 ```sh
 mise run build:backend
-mise run start:backend
 ```
 
-`start:backend` самостоятельно выполняет сборку зависимостей и backend перед запуском. Поэтому для обычного production-запуска достаточно этой команды.
+Сборка и запуск production-версии:
+
+```sh
+mise run start:backend
+```
 
 ## Контракт
 
