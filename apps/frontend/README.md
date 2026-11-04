@@ -1,6 +1,7 @@
 # Frontend календаря звонков
 
-React, TypeScript, Vite, Tailwind CSS и shadcn/ui. Страница проверки соединения обращается к backend через сгенерированный TypeScript SDK.
+React, TypeScript, Vite, Tailwind CSS и shadcn/ui. Страница проверки соединения обращается к backend через
+сгенерированный TypeScript SDK.
 
 ## Запуск
 
@@ -49,7 +50,8 @@ mise run preview:frontend
 
 ## UI-компоненты
 
-Компоненты shadcn/ui хранятся в `src/components/ui/`, настройки генерации — в `components.json`, тема — в `src/index.css`.
+Компоненты shadcn/ui хранятся в `src/components/ui/`, настройки генерации — в `components.json`, тема — в
+`src/index.css`.
 
 Добавить компонент shadcn/ui можно закреплённой версией CLI:
 

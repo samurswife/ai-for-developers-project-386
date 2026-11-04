@@ -49,7 +49,8 @@ test('frontend connects to backend and receives a response matching OpenAPI', as
       },
     });
     const address = frontend.httpServer.address();
-    if (!address || typeof address === 'string') throw new Error('Frontend did not open a TCP port');
+    if (!address || typeof address === 'string')
+      throw new Error('Frontend did not open a TCP port');
     const frontendUrl = `http://127.0.0.1:${address.port}`;
 
     browser = await chromium.launch({ timeout: 10_000 });
@@ -62,16 +63,20 @@ test('frontend connects to backend and receives a response matching OpenAPI', as
 
     const [response] = await Promise.all([
       page.waitForResponse(
-        (response) => response.url() === `${frontendUrl}/api/health` && response.request().method() === 'GET',
+        (candidate) =>
+          candidate.url() === `${frontendUrl}/api/health` && candidate.request().method() === 'GET',
       ),
       page.getByRole('button', { name: 'Проверить соединение', exact: true }).click(),
     ]);
     expect(response.status()).toBe(200);
     expect(response.headers()['content-type']).toMatch(/^application\/json\b/);
-    expect(openapi.paths['/api/health'].get.responses['200'].content['application/json'].schema.$ref)
-      .toBe('#/components/schemas/HealthResponse');
+    expect(
+      openapi.paths['/api/health'].get.responses['200'].content['application/json'].schema.$ref,
+    ).toBe('#/components/schemas/HealthResponse');
 
-    const validate = new Ajv2020({ allErrors: true }).compile(openapi.components.schemas.HealthResponse);
+    const validate = new Ajv2020({ allErrors: true }).compile(
+      openapi.components.schemas.HealthResponse,
+    );
     const body: unknown = await response.json();
     expect(validate(body), JSON.stringify(validate.errors)).toBe(true);
     await page.getByRole('status').filter({ hasText: 'Сервер доступен.' }).waitFor();
@@ -86,7 +91,7 @@ test('frontend connects to backend and receives a response matching OpenAPI', as
         if (frontend) {
           const server = frontend.httpServer;
           const frontendClosed = new Promise<void>((resolve, reject) => {
-            server.close((error) => error ? reject(error) : resolve());
+            server.close((error) => (error ? reject(error) : resolve()));
           });
           if ('closeAllConnections' in server) server.closeAllConnections();
           await frontendClosed;

@@ -4,7 +4,9 @@ import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { getHealth } from '@calendar/api-sdk';
 
-const spec = JSON.parse(await readFile(new URL('../../specs/generated/openapi.json', import.meta.url), 'utf8'));
+const spec = JSON.parse(
+  await readFile(new URL('../../specs/generated/openapi.json', import.meta.url), 'utf8'),
+);
 assert.equal(spec.openapi, '3.1.0');
 assert.equal(spec.paths['/api/health'].get.operationId, 'getHealth');
 assert.equal(
@@ -42,7 +44,7 @@ try {
 } finally {
   if (server.listening) {
     await new Promise((resolve, reject) => {
-      server.close((error) => error ? reject(error) : resolve());
+      server.close((error) => (error ? reject(error) : resolve()));
       server.closeAllConnections();
     });
   }

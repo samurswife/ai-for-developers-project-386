@@ -1,6 +1,7 @@
 # Дымовой тест приложения
 
-Vitest запускает production-сборки frontend и backend на свободных локальных портах. Playwright открывает frontend в Chromium Headless Shell и проверяет всю цепочку React → SDK → Vite proxy → NestJS.
+Vitest запускает production-сборки frontend и backend на свободных локальных портах. Playwright открывает frontend в
+Chromium Headless Shell и проверяет всю цепочку React → SDK → Vite proxy → NestJS.
 
 ## Запуск
 
@@ -10,8 +11,10 @@ Vitest запускает production-сборки frontend и backend на св�
 mise run test
 ```
 
-`mise run setup` устанавливает зависимости и Chromium. Для отдельной установки браузера используйте `mise run setup:browsers`.
+`mise run setup` устанавливает зависимости и Chromium. Для отдельной установки браузера используйте
+`mise run setup:browsers`.
 
-`mise run test` генерирует контракт и SDK, собирает оба приложения и запускает `app.smoke.test.ts`. Тест нажимает «Проверить соединение», проверяет HTTP-ответ по OpenAPI-схеме и сообщение об успешном соединении на странице.
+`mise run test` собирает frontend и backend и проверяет их взаимодействие в браузере.
 
-Браузер и оба сервера завершаются и при успешном тесте, и при ошибке. Конфигурация раннера находится в `vitest.config.ts`.
+Браузер и оба сервера завершаются и при успешном тесте, и при ошибке. Конфигурация раннера находится в
+`vitest.config.ts`.

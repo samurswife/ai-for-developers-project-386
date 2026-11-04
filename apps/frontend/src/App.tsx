@@ -1,32 +1,32 @@
-import { useState } from 'react'
-import { getHealth } from '@calendar/api-sdk'
-import { CalendarDays, LoaderCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState } from 'react';
+import { getHealth } from '@calendar/api-sdk';
+import { CalendarDays, LoaderCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-type ConnectionStatus = 'idle' | 'checking' | 'success' | 'error'
+type ConnectionStatus = 'idle' | 'checking' | 'success' | 'error';
 
 const messages: Record<ConnectionStatus, string> = {
   idle: 'Соединение ещё не проверено.',
   checking: 'Проверяем соединение…',
   success: 'Сервер доступен.',
   error: 'Не удалось связаться с сервером. Попробуйте ещё раз.',
-}
+};
 
 function App() {
-  const [status, setStatus] = useState<ConnectionStatus>('idle')
-  const checking = status === 'checking'
+  const [status, setStatus] = useState<ConnectionStatus>('idle');
+  const checking = status === 'checking';
 
   async function checkConnection() {
-    setStatus('checking')
+    setStatus('checking');
     try {
       const result = await getHealth({
         baseUrl: window.location.origin,
         throwOnError: true,
         signal: AbortSignal.timeout(5000),
-      })
-      setStatus(result.data?.status === 'ok' ? 'success' : 'error')
+      });
+      setStatus(result.data?.status === 'ok' ? 'success' : 'error');
     } catch {
-      setStatus('error')
+      setStatus('error');
     }
   }
 
@@ -40,9 +40,7 @@ function App() {
           <h1 className="mt-6 text-3xl font-semibold tracking-tight sm:text-4xl">
             Календарь звонков
           </h1>
-          <p className="mt-3 text-muted-foreground">
-            Запись на встречи в удобное время.
-          </p>
+          <p className="mt-3 text-muted-foreground">Запись на встречи в удобное время.</p>
         </header>
 
         <section
@@ -52,9 +50,7 @@ function App() {
           <h2 id="connection-title" className="text-lg font-semibold">
             Проверка соединения
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Проверьте доступность сервера.
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">Проверьте доступность сервера.</p>
           <Button
             type="button"
             size="lg"
@@ -63,21 +59,18 @@ function App() {
             aria-busy={checking}
             onClick={() => void checkConnection()}
           >
-            {checking && (
-              <LoaderCircle className="motion-safe:animate-spin" aria-hidden="true" />
-            )}
+            {checking && <LoaderCircle className="motion-safe:animate-spin" aria-hidden="true" />}
             {checking ? 'Проверяем…' : 'Проверить соединение'}
           </Button>
-          <p
-            role="status"
-            className={`mt-4 min-h-6 text-sm ${status === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}
+          <output
+            className={`mt-4 block min-h-6 text-sm ${status === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}
           >
             {messages[status]}
-          </p>
+          </output>
         </section>
       </div>
     </main>
-  )
+  );
 }
 
-export default App
+export default App;

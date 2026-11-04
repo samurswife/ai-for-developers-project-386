@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/syncpack/schema.json",
+  "source": [
+    "package.json",
+    "apps/*/package.json",
+    "packages/*/package.json",
+    "specs/package.json",
+    "tools/*/package.json"
+  ],
+  "semverGroups": [
+    { "dependencies": ["@calendar/**"], "range": "workspace:*" },
+    { "dependencyTypes": ["prod", "dev"], "range": "" }
+  ]
+}

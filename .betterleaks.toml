@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Installed dependencies, generated artifacts, Git metadata and local editor state"
+paths = ['''(^|/)(node_modules|dist|generated|\.git|\.idea)/''']

@@ -2,10 +2,6 @@
   "name": "calendar-calls",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@12.16.1",
-  "engines": {
-    "node": "26.13.0"
-  },
   "scripts": {
     "generate": "pnpm --filter @calendar/contract run generate && pnpm --filter @calendar/api-sdk run generate",
     "build:sdk": "pnpm --filter @calendar/api-sdk run build",
@@ -17,6 +13,34 @@
     "preview:frontend": "pnpm --filter @calendar/frontend run preview",
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "pnpm --filter @calendar/smoke-tests run test",
-    "verify:contract": "pnpm --filter @calendar/contract-probe run verify"
-  }
+    "verify:contract": "pnpm --filter @calendar/contract-probe run verify",
+    "lint:code": "oxlint --deny-warnings apps packages tools",
+    "lint:css": "stylelint \"apps/frontend/src/**/*.css\" --max-warnings 0",
+    "lint:format": "oxfmt --check .",
+    "lint:unused": "knip --no-progress",
+    "lint:architecture": "depcruise --config .dependency-cruiser.cjs apps/backend/src apps/frontend/src packages/api-sdk/src tools",
+    "lint:versions": "syncpack lint --dependency-types dev,prod,pnpmOverrides",
+    "lint:commits": "commitlint --from 636ea6b71be9fba1cf60975e5fce66e42d69dc57 --to HEAD",
+    "lint:openapi": "vacuum lint --no-banner --no-update-check --details --fail-severity warn specs/generated/openapi.json",
+    "lint:markdown": "rumdl check",
+    "scan:secrets": "betterleaks dir --redact --no-banner .",
+    "scan:vulnerabilities": "osv-scanner scan source --lockfile pnpm-lock.yaml",
+    "lint:generated": "node tools/quality/check-generated.mjs",
+    "lint:typespec": "pnpm --filter @calendar/contract exec tsp format --check main.tsp"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
+    "dependency-cruiser": "18.7.2",
+    "knip": "6.44.1",
+    "oxfmt": "0.76.0",
+    "oxlint": "1.90.0",
+    "stylelint": "17.16.0",
+    "stylelint-config-standard": "40.0.0",
+    "syncpack": "15.3.3"
+  },
+  "engines": {
+    "node": "26.13.0"
+  },
+  "packageManager": "pnpm@12.16.1"
 }

@@ -9,6 +9,12 @@ pnpm = "12.16.1"
 hk = "2.11.1"
 pkl = "0.32.2"
 pitchfork = "2.33.1"
+vacuum = "0.36.2"
+jactionlint = "2.4.0"
+betterleaks = "1.9.0"
+osv-scanner = "2.7.0"
+rumdl = "0.3.2"
+"github:agent-sh/agnix" = "0.60.3"
 
 [tasks.setup]
 description = "Установить зависимости workspace по lockfile и Chromium для тестов"
@@ -71,3 +77,75 @@ run = "pnpm run preview:frontend"
 description = "Собрать приложения и выполнить браузерный дымовой тест"
 depends = ["build:backend", "build:frontend"]
 run = "pnpm run test"
+
+[tasks.lint]
+description = "Проверить код, стили, контракты, зависимости и форматирование"
+depends = [
+  "lint:code",
+  "lint:css",
+  "lint:format",
+  "lint:unused",
+  "lint:architecture",
+  "lint:versions",
+  "lint:commits",
+  "lint:openapi",
+  "lint:markdown",
+  "lint:generated",
+  "lint:typespec",
+]
+
+[tasks."lint:code"]
+description = "Проверить TS/JS через Oxlint"
+run = "pnpm run lint:code"
+
+[tasks."lint:css"]
+description = "Проверить CSS через Stylelint"
+run = "pnpm run lint:css"
+
+[tasks."lint:format"]
+description = "Проверить форматирование через oxfmt"
+run = "pnpm run lint:format"
+
+[tasks."lint:unused"]
+description = "Найти неиспользуемые файлы, экспорты и зависимости"
+depends = ["build:sdk"]
+run = "pnpm run lint:unused"
+
+[tasks."lint:architecture"]
+description = "Проверить циклы и границы пакетов"
+depends = ["build:sdk"]
+run = "pnpm run lint:architecture"
+
+[tasks."lint:versions"]
+description = "Проверить версии зависимостей workspace"
+run = "pnpm run lint:versions"
+
+[tasks."lint:commits"]
+description = "Проверить Conventional Commits"
+run = "pnpm run lint:commits"
+
+[tasks."lint:openapi"]
+description = "Проверить OpenAPI через Vacuum"
+depends = ["generate"]
+run = "pnpm run lint:openapi"
+
+[tasks."lint:markdown"]
+description = "Проверить Markdown через rumdl"
+run = "pnpm run lint:markdown"
+
+[tasks."lint:generated"]
+description = "Сравнить OpenAPI и SDK с повторной генерацией"
+depends = ["generate"]
+run = "pnpm run lint:generated"
+
+[tasks."lint:typespec"]
+description = "Проверить форматирование TypeSpec"
+run = "pnpm run lint:typespec"
+
+[tasks."scan:secrets"]
+description = "Проверить файлы проекта на секреты"
+run = "pnpm run scan:secrets"
+
+[tasks."scan:vulnerabilities"]
+description = "Проверить lockfile по базе OSV"
+run = "pnpm run scan:vulnerabilities"

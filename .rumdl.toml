@@ -1,0 +1,6 @@
+[global]
+include = ["apps/**/*.md", "packages/**/*.md", "specs/**/*.md", "tools/**/*.md"]
+exclude = ["**/node_modules/**", "**/dist/**", "**/generated/**"]
+
+[MD013]
+line_length = 120

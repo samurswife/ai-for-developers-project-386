@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/knip/schema-jsonc.json",
+  // Native binaries are installed and pinned by mise.
+  "ignoreBinaries": ["vacuum", "rumdl", "betterleaks", "osv-scanner"],
+  "workspaces": {
+    "specs": {
+      // Knip does not parse TypeSpec imports or emitter settings.
+      "ignoreDependencies": ["@typespec/http", "@typespec/openapi", "@typespec/openapi3"],
+    },
+    "tools/contract-probe": {
+      "entry": ["fixtures/health.controller.ts"],
+    },
+  },
+}
