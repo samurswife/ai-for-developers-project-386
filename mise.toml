@@ -105,7 +105,12 @@ depends = [
   "lint:markdown",
   "lint:generated",
   "lint:typespec",
+  "lint:workflows",
 ]
+
+[tasks."lint:workflows"]
+description = "Проверить workflow проекта через Jactionlint"
+run = "pnpm run lint:workflows"
 
 [tasks."lint:code"]
 description = "Проверить TS/JS через Oxlint"

@@ -8,6 +8,7 @@
 `mise exec -- hk install --mise`.
 
 Перед коммитом hk запускает `mise run check`, затем проверяет сообщение по Conventional Commits.
+GitHub Actions запускает `mise run setup` и `mise run check` на каждый push через `.github/workflows/check.yml`.
 
 | Команда | Проверка |
 | --- | --- |
@@ -23,6 +24,7 @@
 | `mise run lint:openapi` | Vacuum: ошибки и предупреждения OpenAPI |
 | `mise run lint:generated` | Сравнение OpenAPI и SDK с независимой повторной генерацией |
 | `mise run lint:markdown` | Rumdl: Markdown в каталогах приложений, пакетов и инструментов |
+| `mise run lint:workflows` | Jactionlint: workflow проверок проекта |
 | `mise run scan:secrets` | Betterleaks: секреты в файлах с редактированием значений в отчёте |
 | `mise run scan:vulnerabilities` | OSV Scanner: уязвимости зависимостей из lockfile; нужен доступ к сети |
 
@@ -34,6 +36,5 @@
 `lint:commits` проверяет коммиты. Для проверки отдельного сообщения:
 `printf '%s\n' 'feat: описание' | mise exec -- pnpm exec commitlint`.
 
-Jactionlint и Agnix закреплены в mise для проверки GitHub Actions и инструкций агента соответственно.
-Их можно вызвать через `mise exec -- jactionlint --strict-exit <workflow.yml>` и
+Agnix закреплён в mise для проверки инструкций агента:
 `mise exec -- agnix --strict --target codex <AGENTS.md>`.

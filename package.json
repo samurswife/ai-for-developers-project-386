@@ -26,7 +26,8 @@
     "scan:secrets": "betterleaks dir --redact --no-banner .",
     "scan:vulnerabilities": "osv-scanner scan source --lockfile pnpm-lock.yaml",
     "lint:generated": "node tools/quality/check-generated.mjs",
-    "lint:typespec": "pnpm --filter @calendar/contract exec tsp format --check main.tsp"
+    "lint:typespec": "pnpm --filter @calendar/contract exec tsp format --check main.tsp",
+    "lint:workflows": "jactionlint --strict-exit .github/workflows/check.yml"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.4",
