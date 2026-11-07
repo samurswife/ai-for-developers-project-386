@@ -25,3 +25,19 @@
 - В README оставлять только полезную будущим разработчикам информацию:
   без рабочих заметок, планов и объяснений того, что понятно из кода.
 - Не изменять `.github/workflows/hexlet-check.yml`.
+
+## Agent skills
+
+### Issue tracker
+
+Перед работой с задачами и спецификациями прочитай
+`docs/agents/issue-tracker.md`. Трекер — GitHub Issues проекта.
+
+### Triage labels
+
+Перед разбором задач прочитай `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Перед изучением предметной области прочитай `docs/agents/domain.md`.
+Используем единый словарь и общие ADR.

@@ -1,5 +1,12 @@
 [global]
-include = ["AGENTS.md", "apps/**/*.md", "packages/**/*.md", "specs/**/*.md", "tools/**/*.md"]
+include = [
+  "AGENTS.md",
+  "apps/**/*.md",
+  "packages/**/*.md",
+  "specs/**/*.md",
+  "tools/**/*.md",
+  "docs/**/*.md",
+]
 exclude = ["**/node_modules/**", "**/dist/**", "**/generated/**"]
 
 [MD013]
