@@ -1,75 +1,91 @@
-import { useState } from 'react';
-import { getHealth } from '@calendar/api-sdk';
-import { CalendarDays, LoaderCircle } from 'lucide-react';
+import { ArrowRight, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-type ConnectionStatus = 'idle' | 'checking' | 'success' | 'error';
-
-const messages: Record<ConnectionStatus, string> = {
-  idle: 'Соединение ещё не проверено.',
-  checking: 'Проверяем соединение…',
-  success: 'Сервер доступен.',
-  error: 'Не удалось связаться с сервером. Попробуйте ещё раз.',
-};
-
 function App() {
-  const [status, setStatus] = useState<ConnectionStatus>('idle');
-  const checking = status === 'checking';
-
-  async function checkConnection() {
-    setStatus('checking');
-    try {
-      const result = await getHealth({
-        baseUrl: window.location.origin,
-        throwOnError: true,
-        signal: AbortSignal.timeout(5000),
-      });
-      setStatus(result.data?.status === 'ok' ? 'success' : 'error');
-    } catch {
-      setStatus('error');
-    }
-  }
-
   return (
-    <main className="min-h-svh bg-muted/30 px-6 py-16 sm:py-24">
-      <div className="mx-auto max-w-xl">
-        <header>
-          <div className="inline-flex rounded-xl bg-primary p-3 text-primary-foreground">
-            <CalendarDays className="size-6" aria-hidden="true" />
-          </div>
-          <h1 className="mt-6 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Календарь звонков
+    <div className="home-surface min-h-svh">
+      <header className="border-b border-border/70 bg-background/90">
+        <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-x-10 gap-y-5 px-6 py-5 sm:px-8">
+          <a
+            href="/"
+            className="inline-flex items-center gap-3 rounded-lg text-base font-semibold tracking-tight outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background sm:text-lg"
+          >
+            <CalendarClock className="size-6 shrink-0 text-primary" aria-hidden="true" />
+            Запись на звонок
+          </a>
+          <nav aria-label="Основная навигация" className="flex flex-wrap gap-x-7 gap-y-4">
+            <div className="flex flex-col items-start gap-1">
+              <Button
+                variant="ghost"
+                disabled
+                aria-describedby="booking-navigation-note"
+                className="h-auto rounded-none p-0 text-foreground disabled:opacity-100"
+              >
+                Записаться
+              </Button>
+              <span id="booking-navigation-note" className="text-xs text-muted-foreground">
+                Раздел готовится
+              </span>
+            </div>
+            <div className="flex flex-col items-start gap-1">
+              <Button
+                variant="ghost"
+                disabled
+                aria-describedby="owner-navigation-note"
+                className="h-auto rounded-none p-0 text-foreground disabled:opacity-100"
+              >
+                Управление встречами
+              </Button>
+              <span id="owner-navigation-note" className="text-xs text-muted-foreground">
+                Раздел готовится
+              </span>
+            </div>
+          </nav>
+        </div>
+      </header>
+
+      <main className="mx-auto grid max-w-[1200px] items-start gap-10 px-6 py-12 sm:px-8 sm:py-16 lg:grid-cols-2 lg:gap-16">
+        <section aria-labelledby="home-title">
+          <h1
+            id="home-title"
+            className="max-w-[12ch] text-4xl leading-[1.1] font-semibold tracking-tight sm:text-5xl lg:text-6xl"
+          >
+            Запись на звонок
           </h1>
-          <p className="mt-3 text-muted-foreground">Запись на встречи в удобное время.</p>
-        </header>
+          <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground">
+            Выберите тип встречи и удобное время. Запишитесь на звонок без регистрации.
+          </p>
+          <div className="mt-8 flex flex-col items-start gap-3">
+            <Button
+              size="lg"
+              disabled
+              aria-describedby="booking-action-note"
+              className="h-12 gap-3 rounded-xl px-6 text-base font-semibold disabled:opacity-100"
+            >
+              Записаться
+              <ArrowRight aria-hidden="true" />
+            </Button>
+            <span id="booking-action-note" className="text-sm text-muted-foreground">
+              Раздел готовится
+            </span>
+          </div>
+        </section>
 
         <section
-          aria-labelledby="connection-title"
-          className="mt-10 rounded-2xl border bg-card p-6 shadow-sm sm:p-8"
+          aria-labelledby="features-title"
+          className="rounded-2xl border border-border bg-card/90 p-6 shadow-sm sm:p-8"
         >
-          <h2 id="connection-title" className="text-lg font-semibold">
-            Проверка соединения
+          <h2 id="features-title" className="text-xl font-semibold tracking-tight">
+            Возможности
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground">Проверьте доступность сервера.</p>
-          <Button
-            type="button"
-            size="lg"
-            className="mt-6 w-full sm:w-auto"
-            disabled={checking}
-            aria-busy={checking}
-            onClick={() => void checkConnection()}
-          >
-            {checking && <LoaderCircle className="motion-safe:animate-spin" aria-hidden="true" />}
-            {checking ? 'Проверяем…' : 'Проверить соединение'}
-          </Button>
-          <output
-            className={`mt-4 block min-h-6 text-sm ${status === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}
-          >
-            {messages[status]}
-          </output>
+          <ul className="mt-5 list-disc space-y-4 pl-5 text-base leading-relaxed text-muted-foreground marker:text-primary">
+            <li>Выбор типа встречи и свободного времени.</li>
+            <li>Запись на звонок без регистрации.</li>
+            <li>Управление типами встреч и просмотр предстоящих встреч.</li>
+          </ul>
         </section>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
 

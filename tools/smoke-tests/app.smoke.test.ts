@@ -9,7 +9,7 @@ import openapi from '../../specs/generated/openapi.json' with { type: 'json' };
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 
-test('frontend connects to backend and receives a response matching OpenAPI', async () => {
+test('home page explains booking without activating unfinished sections; API proxy matches OpenAPI', async () => {
   const child = spawn(process.execPath, [join(root, 'apps/backend/dist/main.js')], {
     cwd: root,
     env: { ...process.env, PORT: '0' },
@@ -57,17 +57,56 @@ test('frontend connects to backend and receives a response matching OpenAPI', as
     const page = await browser.newPage();
     page.setDefaultTimeout(5000);
     const pageErrors: string[] = [];
+    const apiRequests: string[] = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
+    page.on('request', (request) => {
+      if (new URL(request.url()).pathname.startsWith('/api/')) apiRequests.push(request.url());
+    });
     await page.goto(frontendUrl);
-    await page.getByRole('heading', { name: 'Календарь звонков', exact: true }).waitFor();
+    expect(await page.title()).toBe('Запись на звонок');
+    const heading = page.getByRole('heading', { name: 'Запись на звонок', exact: true });
+    await heading.waitFor();
+    expect(await page.getByRole('heading', { name: 'Проверка соединения' }).count()).toBe(0);
 
-    const [response] = await Promise.all([
-      page.waitForResponse(
-        (candidate) =>
-          candidate.url() === `${frontendUrl}/api/health` && candidate.request().method() === 'GET',
-      ),
-      page.getByRole('button', { name: 'Проверить соединение', exact: true }).click(),
-    ]);
+    for (const width of [1400, 768, 375, 320]) {
+      await page.setViewportSize({ width, height: 1050 });
+      expect(await heading.isVisible()).toBe(true);
+      expect(
+        await page.getByRole('heading', { name: 'Возможности', exact: true }).isVisible(),
+      ).toBe(true);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBe(true);
+
+      const unavailable = page.getByRole('button');
+      expect(await unavailable.count()).toBe(3);
+      expect(await page.getByRole('button', { name: 'Записаться', exact: true }).count()).toBe(2);
+      expect(
+        await page.getByRole('button', { name: 'Управление встречами', exact: true }).isDisabled(),
+      ).toBe(true);
+      for (const control of await unavailable.all()) {
+        expect(await control.isVisible()).toBe(true);
+        expect(await control.isDisabled()).toBe(true);
+        const descriptionId = await control.getAttribute('aria-describedby');
+        expect(descriptionId).toBeTruthy();
+        const description = page.locator(`[id="${descriptionId}"]`);
+        expect(await description.isVisible()).toBe(true);
+        expect(await description.textContent()).toBe('Раздел готовится');
+      }
+    }
+    await page.keyboard.press('Tab');
+    expect(
+      await page
+        .getByRole('link', { name: 'Запись на звонок', exact: true })
+        .evaluate((element) => element === document.activeElement),
+    ).toBe(true);
+    await page.keyboard.press('Enter');
+    await heading.waitFor();
+    expect(new URL(page.url()).pathname).toBe('/');
+    expect(apiRequests).toEqual([]);
+
+    // Keep checking the proxy and contract without a diagnostic control on the public page.
+    const response = await page.request.get(`${frontendUrl}/api/health`);
     expect(response.status()).toBe(200);
     expect(response.headers()['content-type']).toMatch(/^application\/json\b/);
     expect(
@@ -79,8 +118,6 @@ test('frontend connects to backend and receives a response matching OpenAPI', as
     );
     const body: unknown = await response.json();
     expect(validate(body), JSON.stringify(validate.errors)).toBe(true);
-    await page.getByRole('status').filter({ hasText: 'Сервер доступен.' }).waitFor();
-    expect(await page.getByRole('status').textContent()).toBe('Сервер доступен.');
     expect(pageErrors).toEqual([]);
   } finally {
     clearTimeout(startupTimer);
