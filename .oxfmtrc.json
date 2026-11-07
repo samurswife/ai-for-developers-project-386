@@ -3,6 +3,7 @@
   "singleQuote": true,
   "semi": true,
   "ignorePatterns": [
+    ".agents/skills/**",
     "**/node_modules/**",
     "**/dist/**",
     "**/generated/**",

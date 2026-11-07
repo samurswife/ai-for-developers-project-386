@@ -1,5 +1,7 @@
 {
   "$schema": "./node_modules/knip/schema-jsonc.json",
+  // Third-party skill resources are consumed by agents, not application imports.
+  "ignore": [".agents/skills/**"],
   // Native binaries are installed and pinned by mise.
   "ignoreBinaries": ["vacuum", "rumdl", "betterleaks", "osv-scanner", "jactionlint", "agnix"],
   "workspaces": {
