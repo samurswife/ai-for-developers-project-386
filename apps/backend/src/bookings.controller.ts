@@ -1,12 +1,30 @@
 import { randomUUID } from 'node:crypto';
-import { Body, Controller, Post, HttpException } from '@nestjs/common';
-import type { BookingsCreateBookingResponse, CreateBookingRequest } from '@calendar/api-sdk';
+import { Body, Controller, Get, Post, HttpException } from '@nestjs/common';
+import type {
+  BookingsCreateBookingResponse,
+  BookingsListUpcomingBookingsResponse,
+  CreateBookingRequest,
+} from '@calendar/api-sdk';
 import type { BookingsControllerMethods } from '@calendar/api-sdk/nestjs';
 import { calendar } from './calendar.js';
 import { BookingInputPipe } from './booking-input.pipe.js';
 
 @Controller('api/bookings')
 export class BookingsController implements BookingsControllerMethods {
+  @Get('upcoming')
+  async bookingsListUpcomingBookings(): Promise<BookingsListUpcomingBookingsResponse> {
+    const currentTime = Date.now();
+    return {
+      items: calendar.bookings
+        .filter((booking) => Date.parse(booking.startsAt) > currentTime)
+        .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
+        .map(({ meetingTypeId, ...booking }) => ({
+          ...booking,
+          meetingType: calendar.meetingTypes.find((item) => item.id === meetingTypeId)!,
+        })),
+    };
+  }
+
   @Post()
   async bookingsCreateBooking(
     @Body(BookingInputPipe) body: CreateBookingRequest,

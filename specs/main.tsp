@@ -360,6 +360,29 @@ model SlotConflict {
 @tag("Bookings")
 @route("/api/bookings")
 namespace Bookings {
+  /** All bookings starting strictly after one captured server instant, earliest first; no booking-window filter. */
+  @route("/upcoming")
+  @get
+  @opExample(#{ returnType: #{ statusCode: 200, body: #{ items: #[] } } })
+  @opExample(#{
+    returnType: #{
+      statusCode: 500,
+      body: #{
+        code: "INTERNAL_ERROR",
+        message: "Не удалось выполнить запрос.",
+      },
+    },
+  })
+  op listUpcomingBookings():
+    | {
+        @statusCode statusCode: 200;
+        @body body: {
+          /** Upcoming meetings of every type, sorted by start. */
+          @example(#[]) items: Booking[];
+        };
+      }
+    | InternalError;
+
   /** Atomically verify and save a booking in one backend process. No automatic retries. */
   @post
   @opExample(#{

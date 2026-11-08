@@ -1,5 +1,6 @@
 export {
   bookingsCreateBooking,
+  bookingsListUpcomingBookings,
   getHealth,
   meetingTypesGetMeetingType,
   meetingTypesGetSlots,
@@ -13,6 +14,7 @@ export type {
   Slot,
   CreateBookingRequest,
   BookingsCreateBookingResponse,
+  BookingsListUpcomingBookingsResponse,
   GetHealthResponse,
   MeetingTypesGetMeetingTypeResponse,
   MeetingTypesGetSlotsResponse,

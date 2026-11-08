@@ -14,11 +14,11 @@ ajv.addFormat('date-time', {
 });
 const document = ajv.addSchema(openapi, 'api');
 
-async function responseJson(response: Response, status: number) {
+async function responseJson(response: Response, status: number, upcoming = false) {
   expect(response.status).toBe(status);
   expect(response.headers.get('content-type')).toMatch(/^application\/json\b/);
   const validate = document.compile({
-    $ref: `api#/paths/~1api~1bookings/post/responses/${status}/content/application~1json/schema`,
+    $ref: `api#/paths/${upcoming ? '~1api~1bookings~1upcoming/get' : '~1api~1bookings/post'}/responses/${status}/content/application~1json/schema`,
   });
   const body = await response.json();
   expect(validate(body), JSON.stringify(validate.errors)).toBe(true);
@@ -44,6 +44,64 @@ function request(url: string, body: unknown) {
 }
 
 const guest = { guestName: '  Анна  ', guestEmail: '  Anna@Example.com  ' };
+
+test('upcoming list starts empty and reads a genuine saved booking with all nested fields', async () => {
+  const backend = await startCalendar('2026-11-09T05:00:00.000Z');
+  try {
+    const read = () => fetch(`${backend.url}/api/bookings/upcoming`);
+    expect(await responseJson(await read(), 200, true)).toEqual({ items: [] });
+    const item = await publish(backend.url, 17);
+    const booking = await responseJson(
+      await request(backend.url, {
+        meetingTypeId: item.id,
+        startsAt: '2026-11-09T06:00:00Z',
+        ...guest,
+      }),
+      201,
+    );
+    expect(await responseJson(await read(), 200, true)).toEqual({ items: [booking] });
+  } finally {
+    await backend.close();
+  }
+});
+
+test('upcoming combines all types chronologically, excludes begun and exact-now starts, and includes dates outside the new-booking window', async () => {
+  const backend = await startCalendar('2026-11-23T05:00:00.000Z');
+  try {
+    const long = await publish(backend.url, 60);
+    const short = await publish(backend.url, 17);
+    const book = async (id: string, startsAt: string, guestName: string) =>
+      responseJson(
+        await request(backend.url, {
+          meetingTypeId: id,
+          startsAt,
+          guestName,
+          guestEmail: `${guestName}@example.com`,
+        }),
+        201,
+      );
+    const outside = await book(long.id, '2026-12-04T06:00:00Z', 'Far');
+    await backend.setTime('2026-11-09T05:00:00.000Z');
+    const tomorrow = await book(short.id, '2026-11-10T06:00:00Z', 'Tomorrow');
+    const next = await book(long.id, '2026-11-09T07:00:00Z', 'Next');
+    await book(short.id, '2026-11-09T06:30:00Z', 'Now');
+    await book(short.id, '2026-11-09T06:00:00Z', 'Begun');
+    await backend.setTime('2026-11-09T06:30:00.000Z');
+    expect(
+      await responseJson(await fetch(`${backend.url}/api/bookings/upcoming`), 200, true),
+    ).toEqual({ items: [next, tomorrow, outside] });
+    await backend.setTime('2026-11-09T06:40:00.000Z');
+    expect(
+      await responseJson(await fetch(`${backend.url}/api/bookings/upcoming`), 200, true),
+    ).toEqual({ items: [next, tomorrow, outside] });
+    await backend.setTime('2026-12-04T06:00:00.000Z');
+    expect(
+      await responseJson(await fetch(`${backend.url}/api/bookings/upcoming`), 200, true),
+    ).toEqual({ items: [] });
+  } finally {
+    await backend.close();
+  }
+});
 
 test('a genuine booking server failure has the generated 500 contract and does not occupy the slot', async () => {
   const backend = await startCalendar('2026-11-09T05:00:00.000Z', [
@@ -120,7 +178,10 @@ test('two concurrent overlapping requests share one store: one creation, one con
       ),
     );
     expect(results.map((result) => result.status).sort()).toEqual([201, 409]);
-    for (const result of results) await responseJson(result, result.status);
+    const bodies = await Promise.all(results.map((result) => responseJson(result, result.status)));
+    expect(
+      await responseJson(await fetch(`${backend.url}/api/bookings/upcoming`), 200, true),
+    ).toEqual({ items: [bodies[results.findIndex((result) => result.status === 201)]] });
     // With exactly one insertion, the adjacent slot at the loser's outer boundary remains free.
     const slots = await (await fetch(`${backend.url}/api/meeting-types/${item.id}/slots`)).json();
     const winner = results.findIndex((result) => result.status === 201);

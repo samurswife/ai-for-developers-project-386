@@ -5,6 +5,7 @@ import { createServer } from 'node:http';
 import {
   getHealth,
   bookingsCreateBooking,
+  bookingsListUpcomingBookings,
   meetingTypesGetMeetingType,
   meetingTypesGetSlots,
   meetingTypesCreateMeetingType,
@@ -37,11 +38,18 @@ const validationError = {
   fieldErrors: [{ field: 'name', code: 'VALIDATION_ERROR', message: 'Введите название.' }],
 };
 let bookingCreated = false;
+let savedBooking;
 const server = createServer(async (request, response) => {
   let text = '';
   for await (const chunk of request) text += chunk;
   const body = text ? JSON.parse(text) : undefined;
   requests.push({ method: request.method, url: request.url, ...(body ? { body } : {}) });
+  if (request.method === 'GET' && request.url === '/api/bookings/upcoming') {
+    response
+      .writeHead(200, { 'content-type': 'application/json' })
+      .end(JSON.stringify({ items: savedBooking ? [savedBooking] : [] }));
+    return;
+  }
   if (request.method === 'POST' && request.url === '/api/bookings') {
     assert.equal(request.headers['content-type'], 'application/json');
     const conflict = {
@@ -59,6 +67,7 @@ const server = createServer(async (request, response) => {
     response
       .writeHead(bookingCreated ? 409 : 201, { 'content-type': 'application/json' })
       .end(JSON.stringify(bookingCreated ? conflict : booking));
+    if (!bookingCreated) savedBooking = booking;
     bookingCreated = true;
     return;
   }
@@ -267,6 +276,15 @@ try {
     spec.paths['/api/bookings'].post.responses['400'].content['application/json'].schema.anyOf
       .length,
     2,
+  );
+  const upcoming = await bookingsListUpcomingBookings({ baseUrl });
+  assert.equal(upcoming.response.status, 200);
+  assert.deepEqual(upcoming.data, { items: [booked.data] });
+  assert.deepEqual(requests.at(-1), { method: 'GET', url: '/api/bookings/upcoming' });
+  assert.equal(
+    spec.paths['/api/bookings/upcoming'].get.responses['200'].content['application/json'].schema
+      .properties.items.items.$ref,
+    '#/components/schemas/Booking',
   );
   console.log(
     'PASS: OpenAPI 3.1, SDK GET/POST bodies, UUID paths, UTC instants, Moscow dates, arrays and typed errors over real HTTP',

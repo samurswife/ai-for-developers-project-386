@@ -13,10 +13,16 @@ import type {
   MeetingTypesListMeetingTypesResponse,
   CreateBookingRequest,
   BookingsCreateBookingResponse,
+  BookingsListUpcomingBookingsResponse,
 } from '@calendar/api-sdk';
 
 @Controller('api/bookings')
 export class BookingsController implements BookingsControllerMethods {
+  @Get('upcoming')
+  async bookingsListUpcomingBookings(): Promise<BookingsListUpcomingBookingsResponse> {
+    return { items: [] };
+  }
+
   @Post()
   async bookingsCreateBooking(
     @Body() _body: CreateBookingRequest,
