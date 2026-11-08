@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { meetingTypesListMeetingTypes, type MeetingType } from '@calendar/api-sdk';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
+import { useReadLifecycle } from './use-read-lifecycle';
 
 type CatalogState =
   | { status: 'loading' }
@@ -19,27 +20,7 @@ async function readCatalog(signal: AbortSignal): Promise<CatalogState> {
 
 export function MeetingTypesPage() {
   const [state, setState] = useState<CatalogState>({ status: 'loading' });
-  const currentRead = useRef<AbortController | null>(null);
-  useEffect(() => {
-    const controller = new AbortController();
-    currentRead.current = controller;
-    void readCatalog(controller.signal).then((result) => {
-      if (!controller.signal.aborted) setState(result);
-      return undefined;
-    });
-    return () => currentRead.current?.abort();
-  }, []);
-
-  function retry() {
-    setState({ status: 'loading' });
-    currentRead.current?.abort();
-    const controller = new AbortController();
-    currentRead.current = controller;
-    void readCatalog(controller.signal).then((result) => {
-      if (!controller.signal.aborted) setState(result);
-      return undefined;
-    });
-  }
+  const retry = useReadLifecycle(readCatalog, () => setState({ status: 'loading' }), setState);
 
   return (
     <section aria-labelledby="catalog-title">

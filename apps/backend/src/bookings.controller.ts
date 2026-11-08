@@ -8,6 +8,7 @@ import type {
 import type { BookingsControllerMethods } from '@calendar/api-sdk/nestjs';
 import { calendar } from './calendar.js';
 import { BookingInputPipe } from './booking-input.pipe.js';
+import { isOccupied, scheduledDays } from './booking-schedule.js';
 
 @Controller('api/bookings')
 export class BookingsController implements BookingsControllerMethods {
@@ -43,21 +44,13 @@ export class BookingsController implements BookingsControllerMethods {
       );
     const start = Date.parse(body.startsAt);
     const end = start + meetingType.durationMinutes * 60_000;
-    const moscow = new Date(start + 3 * 60 * 60_000);
-    const firstDate = new Date(currentTime + 3 * 60 * 60_000).toISOString().slice(0, 10);
-    const firstDay = Date.parse(`${firstDate}T00:00:00Z`);
-    const date = Number.isFinite(start) ? moscow.toISOString().slice(0, 10) : '';
     if (
       !parsed ||
       !Number.isFinite(start) ||
       new Date(`${parsed[1]}T00:00:00Z`).toISOString().slice(0, 10) !== parsed[1] ||
-      start <= currentTime ||
-      Date.parse(`${date}T00:00:00Z`) < firstDay ||
-      Date.parse(`${date}T00:00:00Z`) >= firstDay + 14 * 86_400_000 ||
-      [0, 6].includes(moscow.getUTCDay()) ||
-      moscow.getUTCMinutes() % 15 !== 0 ||
-      moscow.getUTCHours() < 9 ||
-      end > Date.parse(`${date}T18:00:00+03:00`)
+      !scheduledDays(meetingType.durationMinutes, currentTime).some((day) =>
+        day.starts.includes(start),
+      )
     ) {
       throw new HttpException(
         {
@@ -68,11 +61,7 @@ export class BookingsController implements BookingsControllerMethods {
         400,
       );
     }
-    if (
-      calendar.bookings.some(
-        (booking) => start < Date.parse(booking.endsAt) && Date.parse(booking.startsAt) < end,
-      )
-    ) {
+    if (isOccupied(start, end, calendar.bookings)) {
       throw new HttpException(
         { code: 'SLOT_CONFLICT', message: 'Это время уже занято. Выберите другой слот' },
         409,

@@ -1,32 +1,10 @@
-import { chromium, type Browser, type Page } from 'playwright';
+import type { Page } from 'playwright';
 import { expect, test } from 'vitest';
-import { startBackend, startFrontend } from './apps.js';
+import { startBackend } from './apps.js';
+import { browserScenario } from './browser-scenario.js';
 
 async function scenario(run: (page: Page, url: string, backendUrl: string) => Promise<void>) {
-  const backend = await startBackend();
-  let frontend: Awaited<ReturnType<typeof startFrontend>> | undefined;
-  let browser: Browser | undefined;
-  const cleanupErrors: unknown[] = [];
-  try {
-    frontend = await startFrontend(backend.url);
-    browser = await chromium.launch();
-    const page = await browser.newPage();
-    page.setDefaultTimeout(5000);
-    const errors: string[] = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    await run(page, frontend.url, backend.url);
-    expect(errors).toEqual([]);
-  } finally {
-    const cleanup = await Promise.allSettled([
-      browser?.close(),
-      frontend?.close(),
-      backend.close(),
-    ]);
-    cleanupErrors.push(
-      ...cleanup.filter((result) => result.status === 'rejected').map((result) => result.reason),
-    );
-  }
-  if (cleanupErrors.length) throw new AggregateError(cleanupErrors, 'Application cleanup failed');
+  await browserScenario(startBackend, {}, (page, url, backend) => run(page, url, backend.url));
 }
 
 test('owner creates a meeting type and guests find its real saved data in the catalog', async () => {

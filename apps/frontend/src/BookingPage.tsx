@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type SubmitEvent } from 'react';
+import { useCallback, useRef, useState, type SubmitEvent } from 'react';
 import {
   bookingsCreateBooking,
   meetingTypesGetMeetingType,
@@ -11,6 +11,7 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { BookingDetails } from './BookingDetails';
 import { bookingDraft, navigate, resetBookingDraft, updateBookingDraft } from './booking-scenario';
+import { useReadLifecycle } from './use-read-lifecycle';
 
 async function readSelection(id: string, start: string | null, signal: AbortSignal) {
   try {
@@ -24,9 +25,19 @@ async function readSelection(id: string, start: string | null, signal: AbortSign
     )
       return { status: 'not-found' as const };
     if (!type.data || !slots.data) return { status: 'error' as const };
+    const parsed =
+      start &&
+      /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):([0-5]\d)(?::00(?:\.0+)?)?(Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/.exec(
+        start,
+      );
+    const instant = parsed ? Date.parse(parsed[0]) : NaN;
+    const validStart =
+      parsed &&
+      Number.isFinite(instant) &&
+      new Date(`${parsed[1]}T00:00:00Z`).toISOString().slice(0, 10) === parsed[1];
     const slot = slots.data.days
       .flatMap((day) => day.slots)
-      .find((candidate) => candidate.startsAt === start);
+      .find((candidate) => validStart && Date.parse(candidate.startsAt) === instant);
     if (!slot) {
       if (!signal.aborted) {
         updateBookingDraft({ message: 'Выбранное время больше недоступно. Выберите другой слот.' });
@@ -46,7 +57,6 @@ export function BookingPage({ id }: { id: string }) {
   const [readState, setReadState] = useState<'loading' | 'ready' | 'error' | 'not-found'>(
     'loading',
   );
-  const currentRead = useRef<AbortController | null>(null);
   const [guestName, setGuestName] = useState(bookingDraft.guestName);
   const [guestEmail, setGuestEmail] = useState(bookingDraft.guestEmail);
   const [errors, setErrors] = useState<FieldError[]>([]);
@@ -54,31 +64,14 @@ export function BookingPage({ id }: { id: string }) {
   const [unknown, setUnknown] = useState(false);
   const inFlight = useRef(false);
   const fieldError = (field: string) => errors.find((error) => error.field === field)?.message;
-  useEffect(() => {
-    const controller = new AbortController();
-    currentRead.current = controller;
-    void readSelection(id, start, controller.signal).then((result) => {
-      if (!controller.signal.aborted) {
-        if (result.status === 'ready') setSelection(result);
-        setReadState(result.status);
-      }
-      return undefined;
-    });
-    return () => currentRead.current?.abort();
-  }, [id, start]);
-  function retry() {
-    currentRead.current?.abort();
-    const controller = new AbortController();
-    currentRead.current = controller;
-    setReadState('loading');
-    void readSelection(id, start, controller.signal).then((result) => {
-      if (!controller.signal.aborted) {
-        if (result.status === 'ready') setSelection(result);
-        setReadState(result.status);
-      }
-      return undefined;
-    });
-  }
+  const retry = useReadLifecycle(
+    useCallback((signal: AbortSignal) => readSelection(id, start, signal), [id, start]),
+    () => setReadState('loading'),
+    (result) => {
+      if (result.status === 'ready') setSelection(result);
+      setReadState(result.status);
+    },
+  );
   async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selection || inFlight.current || unknown) return;

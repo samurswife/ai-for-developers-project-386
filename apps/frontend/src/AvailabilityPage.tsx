@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   meetingTypesGetMeetingType,
   meetingTypesGetSlots,
@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { bookingDraft, navigate } from './booking-scenario';
+import { useReadLifecycle } from './use-read-lifecycle';
 
 type CalendarState =
   | { status: 'loading' | 'error' | 'not-found' }
@@ -64,27 +65,11 @@ async function readCalendar(id: string, signal: AbortSignal): Promise<CalendarSt
 
 export function AvailabilityPage({ id }: { id: string }) {
   const [state, setState] = useState<CalendarState>({ status: 'loading' });
-  const currentRead = useRef<AbortController | null>(null);
-  useEffect(() => {
-    const controller = new AbortController();
-    currentRead.current = controller;
-    void readCalendar(id, controller.signal).then((result) => {
-      if (!controller.signal.aborted) setState(result);
-      return undefined;
-    });
-    return () => currentRead.current?.abort();
-  }, [id]);
-
-  function retry() {
-    setState({ status: 'loading' });
-    currentRead.current?.abort();
-    const controller = new AbortController();
-    currentRead.current = controller;
-    void readCalendar(id, controller.signal).then((result) => {
-      if (!controller.signal.aborted) setState(result);
-      return undefined;
-    });
-  }
+  const retry = useReadLifecycle(
+    useCallback((signal: AbortSignal) => readCalendar(id, signal), [id]),
+    () => setState({ status: 'loading' }),
+    setState,
+  );
 
   const selectedDay =
     state.status === 'ready'

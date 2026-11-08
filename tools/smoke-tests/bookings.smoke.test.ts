@@ -1,6 +1,6 @@
-import { chromium, type Browser, type Page } from 'playwright';
+import type { Page } from 'playwright';
 import { expect, test } from 'vitest';
-import { startFrontend } from './apps.js';
+import { browserScenario } from './browser-scenario.js';
 import { startCalendar } from './calendar.js';
 
 async function scenario(
@@ -10,35 +10,14 @@ async function scenario(
     backend: Awaited<ReturnType<typeof startCalendar>>,
   ) => Promise<void>,
 ) {
-  const backend = await startCalendar('2026-11-09T05:00:00.000Z');
-  let frontend: Awaited<ReturnType<typeof startFrontend>> | undefined;
-  let browser: Browser | undefined;
-  const cleanupErrors: unknown[] = [];
-  try {
-    frontend = await startFrontend(backend.url);
-    browser = await chromium.launch();
-    const context = await browser.newContext({
+  await browserScenario(
+    () => startCalendar('2026-11-09T05:00:00.000Z'),
+    {
       timezoneId: 'America/Los_Angeles',
       viewport: { width: 320, height: 900 },
-    });
-    const page = await context.newPage();
-    page.setDefaultTimeout(5000);
-    const errors: string[] = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    await run(page, frontend.url, backend);
-    expect(errors).toEqual([]);
-  } finally {
-    const cleanup = await Promise.allSettled([
-      browser?.close(),
-      frontend?.close(),
-      backend.close(),
-    ]);
-    const errors = cleanup
-      .filter((result) => result.status === 'rejected')
-      .map((result) => result.reason);
-    cleanupErrors.push(...errors);
-  }
-  if (cleanupErrors.length) throw new AggregateError(cleanupErrors, 'Cleanup failed');
+    },
+    run,
+  );
 }
 
 async function publish(url: string) {
@@ -57,6 +36,22 @@ async function choose(page: Page, start = '09:00 – 09:30') {
   await page.getByRole('heading', { name: 'Подтвердите запись', exact: true }).waitFor();
   await page.getByLabel('Имя', { exact: true }).waitFor();
 }
+
+test.each(['2026-11-09T09:00:00+03:00', '2026-11-09T06:00:00Z'])(
+  'guest can confirm a free start expressed as the equivalent instant %s',
+  async (start) => {
+    await scenario(async (page, url, backend) => {
+      const item = await publish(backend.url);
+      await page.goto(`${url}/meeting-types/${item.id}/book?start=${encodeURIComponent(start)}`);
+      await page.getByLabel('Имя', { exact: true }).fill('Анна');
+      await page.getByLabel('Электронная почта', { exact: true }).fill('anna@example.com');
+      await page.getByText('09:00 – 09:30', { exact: true }).waitFor();
+      await page.getByRole('button', { name: 'Подтвердить запись', exact: true }).click();
+      await page.getByRole('heading', { name: 'Вы записаны', exact: true }).waitFor();
+      await page.getByText('09:00 – 09:30', { exact: true }).waitFor();
+    });
+  },
+);
 
 test('guest books through SDK, reloads confirmation, navigates back without POST and starts a clean new booking', async () => {
   await scenario(async (page, url, backend) => {
@@ -308,6 +303,15 @@ test('entering a booking URL rechecks availability, handles unknown types and re
       if (request.method() === 'POST' && request.url().endsWith('/api/bookings')) posts++;
     });
     const formUrl = `${url}/meeting-types/${item.id}/book?start=${encodeURIComponent('2026-11-09T06:00:00.000Z')}`;
+    for (const start of [null, 'not-a-time', '2026-11-09T06:00:00']) {
+      const query = start === null ? '' : `?start=${encodeURIComponent(start)}`;
+      await page.goto(`${url}/meeting-types/${item.id}/book${query}`);
+      await page
+        .getByRole('alert')
+        .filter({ hasText: 'Выбранное время больше недоступно. Выберите другой слот.' })
+        .waitFor();
+      expect(await page.getByLabel('Имя', { exact: true }).count()).toBe(0);
+    }
     for (const suffix of ['', '/slots']) {
       await page.route(`**/api/meeting-types/${item.id}${suffix}`, (route) =>
         route.abort('connectionreset'),

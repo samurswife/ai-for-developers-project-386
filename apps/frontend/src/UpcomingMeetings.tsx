@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { bookingsListUpcomingBookings, type Booking } from '@calendar/api-sdk';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { BookingDetails } from './BookingDetails';
+import { useReadLifecycle } from './use-read-lifecycle';
 
 type MeetingsState =
   | { status: 'loading' }
@@ -20,27 +21,7 @@ async function readMeetings(signal: AbortSignal): Promise<MeetingsState> {
 
 export function UpcomingMeetings() {
   const [state, setState] = useState<MeetingsState>({ status: 'loading' });
-  const currentRead = useRef<AbortController | null>(null);
-  useEffect(() => {
-    const controller = new AbortController();
-    currentRead.current = controller;
-    void readMeetings(controller.signal).then((result) => {
-      if (!controller.signal.aborted) setState(result);
-      return undefined;
-    });
-    return () => currentRead.current?.abort();
-  }, []);
-
-  function refresh() {
-    setState({ status: 'loading' });
-    currentRead.current?.abort();
-    const controller = new AbortController();
-    currentRead.current = controller;
-    void readMeetings(controller.signal).then((result) => {
-      if (!controller.signal.aborted) setState(result);
-      return undefined;
-    });
-  }
+  const refresh = useReadLifecycle(readMeetings, () => setState({ status: 'loading' }), setState);
 
   return (
     <section className="mt-10" aria-labelledby="upcoming-title">

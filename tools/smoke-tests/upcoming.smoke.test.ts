@@ -1,6 +1,6 @@
-import { chromium, type Browser, type Page } from 'playwright';
+import type { Page } from 'playwright';
 import { expect, test } from 'vitest';
-import { startFrontend } from './apps.js';
+import { browserScenario } from './browser-scenario.js';
 import { startCalendar } from './calendar.js';
 
 async function scenario(
@@ -10,34 +10,14 @@ async function scenario(
     backend: Awaited<ReturnType<typeof startCalendar>>,
   ) => Promise<void>,
 ) {
-  const backend = await startCalendar('2026-11-09T05:00:00.000Z');
-  let frontend: Awaited<ReturnType<typeof startFrontend>> | undefined;
-  let browser: Browser | undefined;
-  const cleanupErrors: unknown[] = [];
-  try {
-    frontend = await startFrontend(backend.url);
-    browser = await chromium.launch();
-    const page = await browser.newPage({
+  await browserScenario(
+    () => startCalendar('2026-11-09T05:00:00.000Z'),
+    {
       timezoneId: 'America/Los_Angeles',
       viewport: { width: 320, height: 900 },
-    });
-    page.setDefaultTimeout(5000);
-    const errors: string[] = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    await run(page, frontend.url, backend);
-    expect(errors).toEqual([]);
-  } finally {
-    const cleanup = await Promise.allSettled([
-      browser?.close(),
-      frontend?.close(),
-      backend.close(),
-    ]);
-    const errors = cleanup
-      .filter((result) => result.status === 'rejected')
-      .map((result) => result.reason);
-    cleanupErrors.push(...errors);
-  }
-  if (cleanupErrors.length) throw new AggregateError(cleanupErrors, 'Cleanup failed');
+    },
+    run,
+  );
 }
 
 test('owner creates type, guest books through catalog and confirmation, owner sees Moscow meeting details on a narrow keyboard-accessible page', async () => {
