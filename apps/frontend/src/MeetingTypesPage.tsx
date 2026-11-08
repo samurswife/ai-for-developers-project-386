@@ -1,0 +1,89 @@
+import { useEffect, useRef, useState } from 'react';
+import { meetingTypesListMeetingTypes, type MeetingType } from '@calendar/api-sdk';
+import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api';
+
+type CatalogState =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'ready'; items: MeetingType[] };
+
+async function readCatalog(signal: AbortSignal): Promise<CatalogState> {
+  try {
+    const result = await meetingTypesListMeetingTypes({ client: api, signal });
+    return result.data ? { status: 'ready', items: result.data.items } : { status: 'error' };
+  } catch {
+    return { status: 'error' };
+  }
+}
+
+export function MeetingTypesPage() {
+  const [state, setState] = useState<CatalogState>({ status: 'loading' });
+  const currentRead = useRef<AbortController | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    currentRead.current = controller;
+    void readCatalog(controller.signal).then((result) => {
+      if (!controller.signal.aborted) setState(result);
+      return undefined;
+    });
+    return () => currentRead.current?.abort();
+  }, []);
+
+  function retry() {
+    setState({ status: 'loading' });
+    currentRead.current?.abort();
+    const controller = new AbortController();
+    currentRead.current = controller;
+    void readCatalog(controller.signal).then((result) => {
+      if (!controller.signal.aborted) setState(result);
+      return undefined;
+    });
+  }
+
+  return (
+    <section aria-labelledby="catalog-title">
+      <h1 id="catalog-title" className="text-3xl font-semibold tracking-tight sm:text-4xl">
+        Типы встреч
+      </h1>
+      <p className="mt-3 text-muted-foreground">Выберите подходящий формат звонка.</p>
+      <div className="mt-8" aria-live="polite">
+        {state.status === 'loading' && <output>Загружаем типы встреч…</output>}
+        {state.status === 'error' && (
+          <div className="page-panel">
+            <p role="alert">Не удалось загрузить типы встреч.</p>
+            <Button className="mt-4" onClick={retry}>
+              Повторить
+            </Button>
+          </div>
+        )}
+        {state.status === 'ready' &&
+          (state.items.length === 0 ? (
+            <p className="page-panel">Типов встреч пока нет</p>
+          ) : (
+            <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {state.items.map((item) => (
+                <li className="page-panel flex min-w-0 flex-col items-start" key={item.id}>
+                  <h2 className="w-full text-xl font-semibold break-words">{item.name}</h2>
+                  {item.description && (
+                    <p className="mt-3 w-full break-words whitespace-pre-wrap text-muted-foreground">
+                      {item.description}
+                    </p>
+                  )}
+                  <p className="mt-4">{item.durationMinutes} мин</p>
+                  <div className="mt-auto pt-6">
+                    <Button disabled aria-describedby={`calendar-${item.id}`}>
+                      Выбрать время
+                    </Button>
+                    <p id={`calendar-${item.id}`} className="mt-2 text-sm text-muted-foreground">
+                      Раздел готовится
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ))}
+      </div>
+    </section>
+  );
+}

@@ -24,3 +24,175 @@ op getHealth(): {
   @statusCode statusCode: 200;
   @body body: HealthResponse;
 };
+
+/** Published meeting type. */
+@example(#{
+  id: "7d09f511-e6bb-4fda-8b7a-5602543d6790",
+  name: "Знакомство",
+  description: "",
+  durationMinutes: 30,
+})
+model MeetingType {
+  /** Server-assigned UUID. */
+  @example("7d09f511-e6bb-4fda-8b7a-5602543d6790") @format("uuid") id: string;
+
+  /** Plain-text title, trimmed by the server. */
+  @example("Знакомство")
+  @minLength(1)
+  @maxLength(100)
+  name: string;
+
+  /** Optional details, empty when omitted at creation. */
+  @example("") @maxLength(2000) description: string;
+
+  /** Meeting duration in minutes. */
+  @example(30)
+  @minValue(1)
+  @maxValue(540)
+  durationMinutes: int32;
+}
+
+/** Fields accepted when creating a meeting type. */
+@example(#{ name: "Знакомство", durationMinutes: 30 })
+model CreateMeetingTypeRequest {
+  /** Plain-text title; 1–100 characters after surrounding whitespace is removed. */
+  @example("Знакомство") name: string;
+
+  /** Optional plain-text details. */
+  @example("") @maxLength(2000) description?: string;
+
+  /** Whole number of minutes. */
+  @example(30)
+  @minValue(1)
+  @maxValue(540)
+  durationMinutes: int32;
+}
+
+/** A field that must be corrected. */
+@example(#{
+  field: "name",
+  code: "VALIDATION_ERROR",
+  message: "Введите название.",
+})
+model FieldError {
+  /** Request field, or body for an invalid object. */
+  @example("name") field: string;
+
+  /** Machine-readable reason. */
+  @example("VALIDATION_ERROR") code: string;
+
+  /** Human-readable explanation. */
+  @example("Введите название.") message: string;
+}
+
+/** Invalid request data. */
+@error
+model ValidationError {
+  @statusCode statusCode: 400;
+  @body body: {
+    /** Machine-readable reason. */
+    @example("VALIDATION_ERROR") code: "VALIDATION_ERROR";
+
+    /** Human-readable explanation. */
+    @example("Проверьте поля запроса.") message: string;
+
+    /** Fields to correct. */
+    @example(#[
+      #{ field: "name", code: "VALIDATION_ERROR", message: "Введите название." }
+    ])
+    fieldErrors?: FieldError[];
+  };
+}
+
+/** Unexpected server failure; a write may already have succeeded. */
+@error
+model InternalError {
+  @statusCode statusCode: 500;
+  @body body: {
+    /** Machine-readable reason. */
+    @example("INTERNAL_ERROR") code: "INTERNAL_ERROR";
+
+    /** Human-readable explanation. */
+    @example("Не удалось выполнить запрос.") message: string;
+
+    /** Optional field details. */
+    @example(#[]) fieldErrors?: FieldError[];
+  };
+}
+
+@tag("MeetingTypes")
+@route("/api/meeting-types")
+namespace MeetingTypes {
+  /** List meeting types in creation order, oldest first. */
+  @get
+  @opExample(#{ returnType: #{ statusCode: 200, body: #{ items: #[] } } })
+  @opExample(#{
+    returnType: #{
+      statusCode: 500,
+      body: #{
+        code: "INTERNAL_ERROR",
+        message: "Не удалось выполнить запрос.",
+      },
+    },
+  })
+  op listMeetingTypes():
+    | {
+        @statusCode statusCode: 200;
+        @body body: {
+          /** All published meeting types. */
+          @example(#[]) items: MeetingType[];
+        };
+      }
+    | InternalError;
+
+  /** Publish a meeting type. Extra fields and null values are rejected. */
+  @post
+  @opExample(#{
+    parameters: #{ body: #{ name: "Знакомство", durationMinutes: 30 } },
+    returnType: #{
+      statusCode: 201,
+      body: #{
+        id: "7d09f511-e6bb-4fda-8b7a-5602543d6790",
+        name: "Знакомство",
+        description: "",
+        durationMinutes: 30,
+      },
+    },
+  })
+  @opExample(#{
+    returnType: #{
+      statusCode: 400,
+      body: #{
+        code: "VALIDATION_ERROR",
+        message: "Проверьте поля запроса.",
+        fieldErrors: #[
+          #{
+            field: "name",
+            code: "VALIDATION_ERROR",
+            message: "Введите название.",
+          }
+        ],
+      },
+    },
+  })
+  @opExample(#{
+    returnType: #{
+      statusCode: 500,
+      body: #{
+        code: "INTERNAL_ERROR",
+        message: "Не удалось выполнить запрос.",
+      },
+    },
+  })
+  op createMeetingType(
+    @doc("Meeting type fields supplied by the owner.")
+    @body
+    body: CreateMeetingTypeRequest,
+  ):
+    | {
+        @statusCode statusCode: 201;
+        @body body: MeetingType;
+      }
+    | ValidationError
+    | InternalError;
+}

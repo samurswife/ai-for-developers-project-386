@@ -12,6 +12,8 @@ GitHub Actions запускает `mise run setup` и `mise run check` на ка
 | Команда | Проверка |
 | --- | --- |
 | `mise run lint` | Все перечисленные ниже задачи `lint:*` |
+| `mise run test:api` | HTTP API настоящего backend: успехи, ошибки и соответствие OpenAPI |
+| `mise run test` | Браузерные сценарии с настоящим backend |
 | `mise run lint:code` | Oxlint: ошибки TS/JS, React и доступности |
 | `mise run lint:css` | Stylelint: CSS с синтаксисом Tailwind |
 | `mise run lint:format` | Oxfmt: форматирование исходников и конфигурации |

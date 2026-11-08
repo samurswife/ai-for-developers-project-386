@@ -12,5 +12,9 @@
     "tools/contract-probe": {
       "entry": ["fixtures/health.controller.ts"],
     },
+    "tools/smoke-tests": {
+      // API tests use a separate Vitest mode; Node loads the fault fixture with --import.
+      "entry": ["*.test.ts", "fail-randomness.mjs"],
+    },
   },
 }

@@ -31,7 +31,15 @@ ready_port = 5173
 
 [tasks.check]
 description = "Выполнить все проверки проекта"
-depends = ["lint", "typecheck", "test", "verify:contract", "scan:secrets", "scan:vulnerabilities"]
+depends = [
+  "lint",
+  "typecheck",
+  "test",
+  "test:api",
+  "verify:contract",
+  "scan:secrets",
+  "scan:vulnerabilities",
+]
 
 [tasks."setup:browsers"]
 description = "Установить Chromium для браузерного дымового теста"
@@ -90,6 +98,11 @@ run = "pnpm run preview:frontend"
 description = "Собрать приложения и выполнить браузерный дымовой тест"
 depends = ["build:backend", "build:frontend"]
 run = "pnpm run test"
+
+[tasks."test:api"]
+description = "Проверить предметный HTTP API настоящего backend"
+depends = ["build:backend"]
+run = "pnpm run test:api"
 
 [tasks.lint]
 description = "Проверить код, стили, контракты, зависимости и форматирование"

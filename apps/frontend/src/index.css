@@ -90,6 +90,41 @@
     linear-gradient(175deg, #fff9f7 15%, #e4edf0 65%, #fff9f7 100%);
 }
 
+.navigation-link {
+  outline: none;
+}
+
+.navigation-link:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 5px;
+  border-radius: 4px;
+}
+
+.page-panel {
+  @apply rounded-2xl border border-border bg-card/90 p-6 shadow-sm sm:p-8;
+}
+
+label {
+  @apply mb-2 block font-medium;
+}
+
+input,
+textarea {
+  @apply block w-full min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring;
+}
+
+[aria-invalid='true'] {
+  border-color: var(--primary);
+}
+
+.field-error {
+  @apply mt-2 text-sm text-primary;
+}
+
+.field-error:empty {
+  display: none;
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
