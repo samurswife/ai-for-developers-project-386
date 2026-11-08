@@ -137,6 +137,7 @@ mise run setup
 | `mise run preview:frontend` | Сборка и локальный просмотр production-версии frontend |
 | `mise run typecheck` | Проверка типов |
 | `mise run test` | Браузерный дымовой тест frontend и backend |
+| `mise run test:api` | HTTP-тесты настоящего backend по OpenAPI |
 | `mise run verify:contract` | Проверка генерации API и SDK |
 | `mise run lint` | Линтеры |
 | `mise run check` | Все проверки проекта |

@@ -13,6 +13,7 @@
     "preview:frontend": "pnpm --filter @calendar/frontend run preview",
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "pnpm --filter @calendar/smoke-tests run test",
+    "test:api": "pnpm --filter @calendar/smoke-tests run test:api",
     "verify:contract": "pnpm --filter @calendar/contract-probe run verify",
     "lint:code": "oxlint --deny-warnings apps packages tools",
     "lint:css": "stylelint \"apps/frontend/src/**/*.css\" --max-warnings 0",
@@ -27,7 +28,7 @@
     "scan:vulnerabilities": "osv-scanner scan source --lockfile pnpm-lock.yaml",
     "lint:generated": "node tools/quality/check-generated.mjs",
     "lint:typespec": "pnpm --filter @calendar/contract exec tsp format --check main.tsp",
-    "lint:workflows": "jactionlint --strict-exit .github/workflows/check.yml",
+    "lint:workflows": "jactionlint --strict-exit .github/workflows/check.yml .github/workflows/release-please.yml",
     "lint:agents": "agnix --strict --target codex AGENTS.md"
   },
   "devDependencies": {

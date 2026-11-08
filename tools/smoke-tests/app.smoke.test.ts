@@ -9,7 +9,7 @@ import openapi from '../../specs/generated/openapi.json' with { type: 'json' };
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 
-test('home page explains booking without activating unfinished sections; API proxy matches OpenAPI', async () => {
+test('home page keeps its layout and links to ready sections; API proxy matches OpenAPI', async () => {
   const child = spawn(process.execPath, [join(root, 'apps/backend/dist/main.js')], {
     cwd: root,
     env: { ...process.env, PORT: '0' },
@@ -78,20 +78,14 @@ test('home page explains booking without activating unfinished sections; API pro
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
       ).toBe(true);
 
-      const unavailable = page.getByRole('button');
-      expect(await unavailable.count()).toBe(3);
-      expect(await page.getByRole('button', { name: 'Записаться', exact: true }).count()).toBe(2);
+      expect(await page.getByRole('link', { name: 'Записаться', exact: true }).count()).toBe(2);
       expect(
-        await page.getByRole('button', { name: 'Управление встречами', exact: true }).isDisabled(),
+        await page.getByRole('link', { name: 'Управление встречами', exact: true }).isVisible(),
       ).toBe(true);
-      for (const control of await unavailable.all()) {
-        expect(await control.isVisible()).toBe(true);
-        expect(await control.isDisabled()).toBe(true);
-        const descriptionId = await control.getAttribute('aria-describedby');
-        expect(descriptionId).toBeTruthy();
-        const description = page.locator(`[id="${descriptionId}"]`);
-        expect(await description.isVisible()).toBe(true);
-        expect(await description.textContent()).toBe('Раздел готовится');
+      for (const control of await page
+        .getByRole('link', { name: 'Записаться', exact: true })
+        .all()) {
+        expect(await control.getAttribute('href')).toBe('/meeting-types');
       }
     }
     await page.keyboard.press('Tab');

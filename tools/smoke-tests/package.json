@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
+    "test:api": "API_TESTS=1 vitest run",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

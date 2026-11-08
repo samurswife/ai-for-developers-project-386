@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['*.smoke.test.ts'],
+    include: process.env.API_TESTS ? ['*.api.test.ts'] : ['*.smoke.test.ts'],
     testTimeout: 45_000,
   },
 });
