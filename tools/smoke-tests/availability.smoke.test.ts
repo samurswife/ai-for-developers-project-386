@@ -2,13 +2,10 @@ import { writeFile } from 'node:fs/promises';
 import { chromium, type Browser, type Page } from 'playwright';
 import { expect, test } from 'vitest';
 import { startFrontend } from './apps.js';
-import { startCalendar } from './calendar.js';
+import { fillCalendarWindow, startCalendar } from './calendar.js';
 
-async function scenario(
-  run: (page: Page, url: string, backendUrl: string) => Promise<void>,
-  occupied: { startsAt: string; endsAt: string }[] = [],
-) {
-  const backend = await startCalendar('2026-11-08T12:00:00.000Z', occupied);
+async function scenario(run: (page: Page, url: string, backendUrl: string) => Promise<void>) {
+  const backend = await startCalendar('2026-11-08T12:00:00.000Z');
   let frontend: Awaited<ReturnType<typeof startFrontend>> | undefined;
   let browser: Browser | undefined;
   const cleanupErrors: unknown[] = [];
@@ -66,7 +63,7 @@ test('guest opens the real calendar from catalog, chooses Moscow time with keybo
     expect(await firstSlot.getAttribute('aria-pressed')).toBe('true');
     await page.getByText('Выбрано: 09:00 – 09:30', { exact: true }).waitFor();
     expect(await page.getByRole('button', { name: 'Продолжить', exact: true }).isDisabled()).toBe(
-      true,
+      false,
     );
     await page.getByText('Выбор слота не удерживает время.', { exact: true }).waitFor();
     expect(await firstSlot.evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe(
@@ -160,28 +157,26 @@ test('a genuine unknown meeting type offers a catalog recovery path', async () =
 });
 
 test('a fully occupied real calendar shows all dates, selects the first and explains the empty window', async () => {
-  await scenario(
-    async (page, url, backendUrl) => {
-      const item = await publish(backendUrl);
-      await page.goto(`${url}/meeting-types/${item.id}`);
-      await page.getByText('В ближайшие 14 дней свободного времени нет', { exact: true }).waitFor();
-      await page.getByText('На эту дату свободного времени нет', { exact: true }).waitFor();
-      const dates = page.getByRole('group', { name: 'Даты записи' });
-      expect(await dates.getByRole('button').count()).toBe(14);
-      expect(
-        await dates.getByRole('button', { name: /^8 ноября/ }).getAttribute('aria-pressed'),
-      ).toBe('true');
-      await dates.getByRole('button', { name: /^9 ноября/ }).click();
-      expect(
-        await dates.getByRole('button', { name: /^9 ноября/ }).getAttribute('aria-pressed'),
-      ).toBe('true');
-      expect(await page.getByRole('button', { name: 'Продолжить', exact: true }).isDisabled()).toBe(
-        true,
-      );
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
-        true,
-      );
-    },
-    [{ startsAt: '2026-11-08T00:00:00.000Z', endsAt: '2026-11-22T00:00:00.000Z' }],
-  );
+  await scenario(async (page, url, backendUrl) => {
+    await fillCalendarWindow(backendUrl);
+    const item = await publish(backendUrl);
+    await page.goto(`${url}/meeting-types/${item.id}`);
+    await page.getByText('В ближайшие 14 дней свободного времени нет', { exact: true }).waitFor();
+    await page.getByText('На эту дату свободного времени нет', { exact: true }).waitFor();
+    const dates = page.getByRole('group', { name: 'Даты записи' });
+    expect(await dates.getByRole('button').count()).toBe(14);
+    expect(
+      await dates.getByRole('button', { name: /^8 ноября/ }).getAttribute('aria-pressed'),
+    ).toBe('true');
+    await dates.getByRole('button', { name: /^9 ноября/ }).click();
+    expect(
+      await dates.getByRole('button', { name: /^9 ноября/ }).getAttribute('aria-pressed'),
+    ).toBe('true');
+    expect(await page.getByRole('button', { name: 'Продолжить', exact: true }).isDisabled()).toBe(
+      true,
+    );
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  });
 });

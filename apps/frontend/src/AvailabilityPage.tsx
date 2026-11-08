@@ -7,6 +7,7 @@ import {
 } from '@calendar/api-sdk';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
+import { bookingDraft, navigate } from './booking-scenario';
 
 type CalendarState =
   | { status: 'loading' | 'error' | 'not-found' }
@@ -105,6 +106,11 @@ export function AvailabilityPage({ id }: { id: string }) {
             : 'Выберите время'}
       </h1>
       <div className="mt-6" aria-live="polite">
+        {bookingDraft.message && (
+          <p role="alert" className="mb-5">
+            {bookingDraft.message}
+          </p>
+        )}
         {state.status === 'loading' && <output>Загружаем доступное время…</output>}
         {state.status === 'error' && (
           <div className="page-panel">
@@ -180,12 +186,18 @@ export function AvailabilityPage({ id }: { id: string }) {
                 <p className="mb-3 font-semibold">Выбрано: {intervalLabel(selectedSlot)}</p>
               )}
               <p className="text-muted-foreground">Выбор слота не удерживает время.</p>
-              <Button className="mt-4" disabled aria-describedby="booking-unavailable">
+              <Button
+                className="mt-4"
+                disabled={!selectedSlot}
+                onClick={() => {
+                  if (selectedSlot)
+                    navigate(
+                      `/meeting-types/${id}/book?start=${encodeURIComponent(selectedSlot.startsAt)}`,
+                    );
+                }}
+              >
                 Продолжить
               </Button>
-              <p id="booking-unavailable" className="mt-2 text-sm text-muted-foreground">
-                Раздел готовится
-              </p>
             </div>
           </>
         )}

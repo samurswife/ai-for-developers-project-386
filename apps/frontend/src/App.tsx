@@ -2,9 +2,41 @@ import { ArrowRight, CalendarClock } from 'lucide-react';
 import { AvailabilityPage } from './AvailabilityPage';
 import { OwnerPage } from './OwnerPage';
 import { MeetingTypesPage } from './MeetingTypesPage';
+import { useEffect, useState } from 'react';
+import { BookingPage } from './BookingPage';
+import { ConfirmationPage } from './ConfirmationPage';
+import { navigate } from './booking-scenario';
 
 function App() {
+  const [, setAddress] = useState(location.href);
+  useEffect(() => {
+    const update = () => setAddress(location.href);
+    window.addEventListener('popstate', update);
+    const follow = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.altKey
+      )
+        return;
+      const link = event.target instanceof Element ? event.target.closest('a') : null;
+      if (!link || link.target || link.hasAttribute('download') || link.origin !== location.origin)
+        return;
+      event.preventDefault();
+      navigate(link.pathname + link.search + link.hash);
+    };
+    document.addEventListener('click', follow);
+    return () => {
+      window.removeEventListener('popstate', update);
+      document.removeEventListener('click', follow);
+    };
+  }, []);
   const meetingTypeId = location.pathname.match(/^\/meeting-types\/([^/]+)$/)?.[1];
+  const bookingTypeId = location.pathname.match(/^\/meeting-types\/([^/]+)\/book$/)?.[1];
+  const confirmationId = location.pathname.match(/^\/bookings\/([^/]+)\/confirmation$/)?.[1];
   return (
     <div className="home-surface min-h-svh">
       <header className="border-b border-border/70 bg-background/90">
@@ -79,7 +111,11 @@ function App() {
           ) : location.pathname === '/meeting-types' ? (
             <MeetingTypesPage />
           ) : meetingTypeId ? (
-            <AvailabilityPage id={meetingTypeId} />
+            <AvailabilityPage key={location.href} id={meetingTypeId} />
+          ) : bookingTypeId ? (
+            <BookingPage key={location.href} id={bookingTypeId} />
+          ) : confirmationId ? (
+            <ConfirmationPage id={confirmationId} />
           ) : (
             <section className="page-panel">
               <h1 className="text-3xl font-semibold">Страница не найдена</h1>

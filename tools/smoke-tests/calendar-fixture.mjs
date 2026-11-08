@@ -10,7 +10,3 @@ globalThis.Date = class extends NativeDate {
     return NativeDate.parse(readState().currentTime);
   }
 };
-
-// Until the public booking write exists, seed only the application data fixture.
-const { calendar } = await import('../../apps/backend/dist/calendar.js');
-calendar.bookings.push(...(readState().occupied ?? []));

@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import {
   getHealth,
+  bookingsCreateBooking,
   meetingTypesGetMeetingType,
   meetingTypesGetSlots,
   meetingTypesCreateMeetingType,
@@ -35,11 +36,32 @@ const validationError = {
   message: 'Проверьте поля запроса.',
   fieldErrors: [{ field: 'name', code: 'VALIDATION_ERROR', message: 'Введите название.' }],
 };
+let bookingCreated = false;
 const server = createServer(async (request, response) => {
   let text = '';
   for await (const chunk of request) text += chunk;
   const body = text ? JSON.parse(text) : undefined;
   requests.push({ method: request.method, url: request.url, ...(body ? { body } : {}) });
+  if (request.method === 'POST' && request.url === '/api/bookings') {
+    assert.equal(request.headers['content-type'], 'application/json');
+    const conflict = {
+      code: 'SLOT_CONFLICT',
+      message: 'Это время уже занято. Выберите другой слот',
+    };
+    const booking = {
+      id: 'f07a5448-2aad-4ca2-b809-5589161cfaf4',
+      meetingType,
+      startsAt: '2026-11-09T06:00:00.000Z',
+      endsAt: '2026-11-09T06:30:00.000Z',
+      guestName: body.guestName,
+      guestEmail: body.guestEmail,
+    };
+    response
+      .writeHead(bookingCreated ? 409 : 201, { 'content-type': 'application/json' })
+      .end(JSON.stringify(bookingCreated ? conflict : booking));
+    bookingCreated = true;
+    return;
+  }
   if (request.method === 'GET' && request.url === `/api/meeting-types/${meetingType.id}`) {
     response
       .writeHead(200, { 'content-type': 'application/json' })
@@ -199,6 +221,53 @@ try {
   assert.equal(spec.components.schemas.MoscowDate.format, 'date');
   assert.equal(spec.components.schemas.UtcInstant.format, 'date-time');
   assert.equal(spec.components.schemas.UtcInstant.pattern, 'Z$');
+  const bookingInput = {
+    meetingTypeId: meetingType.id,
+    startsAt: '2026-11-09T09:00:00+03:00',
+    guestName: 'Анна',
+    guestEmail: 'Anna@example.com',
+  };
+  const booked = await bookingsCreateBooking({ baseUrl, body: bookingInput });
+  assert.equal(booked.response.status, 201);
+  assert.deepEqual(booked.data, {
+    id: 'f07a5448-2aad-4ca2-b809-5589161cfaf4',
+    meetingType,
+    startsAt: '2026-11-09T06:00:00.000Z',
+    endsAt: '2026-11-09T06:30:00.000Z',
+    guestName: 'Анна',
+    guestEmail: 'Anna@example.com',
+  });
+  const conflict = await bookingsCreateBooking({ baseUrl, body: bookingInput });
+  assert.equal(conflict.response.status, 409);
+  assert.deepEqual(conflict.error, {
+    code: 'SLOT_CONFLICT',
+    message: 'Это время уже занято. Выберите другой слот',
+  });
+  assert.deepEqual(requests.slice(-2), [
+    { method: 'POST', url: '/api/bookings', body: bookingInput },
+    { method: 'POST', url: '/api/bookings', body: bookingInput },
+  ]);
+  assert.equal(
+    spec.paths['/api/bookings'].post.requestBody.content['application/json'].schema.$ref,
+    '#/components/schemas/CreateBookingRequest',
+  );
+  assert.equal(
+    spec.paths['/api/bookings'].post.responses['201'].content['application/json'].schema.$ref,
+    '#/components/schemas/Booking',
+  );
+  assert.equal(
+    spec.components.schemas.Booking.properties.meetingType.$ref,
+    '#/components/schemas/MeetingType',
+  );
+  assert.equal(
+    spec.components.schemas.Booking.properties.startsAt.$ref,
+    '#/components/schemas/UtcInstant',
+  );
+  assert.equal(
+    spec.paths['/api/bookings'].post.responses['400'].content['application/json'].schema.anyOf
+      .length,
+    2,
+  );
   console.log(
     'PASS: OpenAPI 3.1, SDK GET/POST bodies, UUID paths, UTC instants, Moscow dates, arrays and typed errors over real HTTP',
   );

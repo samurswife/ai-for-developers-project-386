@@ -278,6 +278,172 @@ scalar UtcInstant extends string;
 @format("date")
 scalar MoscowDate extends string;
 
+/** A confirmed guest booking. */
+model Booking {
+  /** Server-assigned UUID. */
+  @example("f07a5448-2aad-4ca2-b809-5589161cfaf4") @format("uuid") id: string;
+
+  /** Referenced meeting type. */
+  @example(#{
+    id: "7d09f511-e6bb-4fda-8b7a-5602543d6790",
+    name: "Знакомство",
+    description: "",
+    durationMinutes: 30,
+  })
+  meetingType: MeetingType;
+
+  /** Inclusive UTC start. */
+  @example("2026-11-09T06:00:00.000Z") startsAt: UtcInstant;
+
+  /** Exclusive UTC end computed by the server. */
+  @example("2026-11-09T06:30:00.000Z") endsAt: UtcInstant;
+
+  /** Trimmed guest name. */
+  @example("Анна")
+  @minLength(1)
+  @maxLength(100)
+  guestName: string;
+
+  /** Trimmed email, preserving original spelling. */
+  @example("Anna@example.com") @maxLength(254) guestEmail: string;
+}
+
+/** Fields accepted for a new booking. Strings are validated by the server. */
+model CreateBookingRequest {
+  /** Published meeting type UUID. */
+  @example("7d09f511-e6bb-4fda-8b7a-5602543d6790")
+  @format("uuid")
+  meetingTypeId: string;
+
+  /** ISO 8601 instant with Z or numeric offset; invalid strings receive INVALID_TIME. */
+  @example("2026-11-09T09:00:00+03:00") startsAt: string;
+
+  /** Name, 1–100 characters after trimming. */
+  @example("Анна") guestName: string;
+
+  /** Email, at most 254 characters after trimming. */
+  @example("Anna@example.com") guestEmail: string;
+}
+
+/** A syntactically valid string that violates the booking time rules. */
+@error
+model InvalidTime {
+  @statusCode statusCode: 400;
+  @body body: {
+    /** Machine-readable reason. */
+    @example("INVALID_TIME") code: "INVALID_TIME";
+
+    /** Explanation of the invalid selection. */
+    @example("Выбранное время больше недоступно.") message: string;
+
+    /** Optional field details. */
+    @example(#[]) fieldErrors?: FieldError[];
+  };
+}
+
+/** Another booking overlaps the requested interval. */
+@error
+model SlotConflict {
+  @statusCode statusCode: 409;
+  @body body: {
+    /** Machine-readable reason. */
+    @example("SLOT_CONFLICT") code: "SLOT_CONFLICT";
+
+    /** Explanation of the conflict. */
+    @example("Это время уже занято. Выберите другой слот") message: string;
+
+    /** Optional field details. */
+    @example(#[]) fieldErrors?: FieldError[];
+  };
+}
+
+@tag("Bookings")
+@route("/api/bookings")
+namespace Bookings {
+  /** Atomically verify and save a booking in one backend process. No automatic retries. */
+  @post
+  @opExample(#{
+    parameters: #{
+      body: #{
+        meetingTypeId: "7d09f511-e6bb-4fda-8b7a-5602543d6790",
+        startsAt: "2026-11-09T09:00:00+03:00",
+        guestName: "Анна",
+        guestEmail: "Anna@example.com",
+      },
+    },
+    returnType: #{
+      statusCode: 201,
+      body: #{
+        id: "f07a5448-2aad-4ca2-b809-5589161cfaf4",
+        meetingType: #{
+          id: "7d09f511-e6bb-4fda-8b7a-5602543d6790",
+          name: "Знакомство",
+          description: "",
+          durationMinutes: 30,
+        },
+        startsAt: "2026-11-09T06:00:00.000Z",
+        endsAt: "2026-11-09T06:30:00.000Z",
+        guestName: "Анна",
+        guestEmail: "Anna@example.com",
+      },
+    },
+  })
+  @opExample(#{
+    returnType: #{
+      statusCode: 400,
+      body: #{
+        code: "INVALID_TIME",
+        message: "Выбранное время больше недоступно.",
+      },
+    },
+  })
+  @opExample(#{
+    returnType: #{
+      statusCode: 400,
+      body: #{ code: "VALIDATION_ERROR", message: "Проверьте поля запроса." },
+    },
+  })
+  @opExample(#{
+    returnType: #{
+      statusCode: 404,
+      body: #{
+        code: "MEETING_TYPE_NOT_FOUND",
+        message: "Тип встречи не найден.",
+      },
+    },
+  })
+  @opExample(#{
+    returnType: #{
+      statusCode: 409,
+      body: #{
+        code: "SLOT_CONFLICT",
+        message: "Это время уже занято. Выберите другой слот",
+      },
+    },
+  })
+  @opExample(#{
+    returnType: #{
+      statusCode: 500,
+      body: #{
+        code: "INTERNAL_ERROR",
+        message: "Не удалось выполнить запрос.",
+      },
+    },
+  })
+  op createBooking(
+    @doc("Guest and selected start.") @body body: CreateBookingRequest,
+  ):
+    | {
+        @statusCode statusCode: 201;
+        @body body: Booking;
+      }
+    | ValidationError
+    | MeetingTypeNotFound
+    | InvalidTime
+    | SlotConflict
+    | InternalError;
+}
+
 /** A computed, unreserved interval for a meeting. */
 model Slot {
   /** Inclusive start, strictly after currentTime. */

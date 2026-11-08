@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, Param } from '@nestjs/common';
 import type {
   HealthControllerMethods,
   MeetingTypesControllerMethods,
+  BookingsControllerMethods,
 } from '@calendar/api-sdk/nestjs';
 import type {
   GetHealthResponse,
@@ -10,7 +11,19 @@ import type {
   CreateMeetingTypeRequest,
   MeetingTypesCreateMeetingTypeResponse,
   MeetingTypesListMeetingTypesResponse,
+  CreateBookingRequest,
+  BookingsCreateBookingResponse,
 } from '@calendar/api-sdk';
+
+@Controller('api/bookings')
+export class BookingsController implements BookingsControllerMethods {
+  @Post()
+  async bookingsCreateBooking(
+    @Body() _body: CreateBookingRequest,
+  ): Promise<BookingsCreateBookingResponse> {
+    throw new Error('Compile-only fixture');
+  }
+}
 
 // Compile-only fixture: this is not the application backend.
 @Controller('api')

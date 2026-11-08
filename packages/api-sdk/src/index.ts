@@ -1,4 +1,5 @@
 export {
+  bookingsCreateBooking,
   getHealth,
   meetingTypesGetMeetingType,
   meetingTypesGetSlots,
@@ -8,6 +9,10 @@ export {
 export { client } from './generated/client.gen.js';
 export { createClient, createConfig } from './generated/client/index.js';
 export type {
+  Booking,
+  Slot,
+  CreateBookingRequest,
+  BookingsCreateBookingResponse,
   GetHealthResponse,
   MeetingTypesGetMeetingTypeResponse,
   MeetingTypesGetSlotsResponse,

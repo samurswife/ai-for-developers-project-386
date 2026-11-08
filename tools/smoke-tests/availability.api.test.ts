@@ -2,7 +2,7 @@ import { expect, test } from 'vitest';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import openapi from '../../specs/generated/openapi.json' with { type: 'json' };
 import { startBackend } from './apps.js';
-import { startCalendar } from './calendar.js';
+import { fillCalendarWindow, startCalendar } from './calendar.js';
 
 const ajv = new Ajv2020({ allErrors: true, strictSchema: false });
 ajv.addFormat('uuid', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
@@ -129,24 +129,27 @@ test('availability contains fourteen Moscow dates, sorted weekday slots and empt
 });
 
 test('all owner bookings exclude overlaps, including different types and begun intervals, while half-open adjacency remains free', async () => {
-  const backend = await startCalendar('2026-11-09T06:10:00.000Z', [
-    {
-      meetingTypeId: 'another-type',
-      startsAt: '2026-11-09T06:00:00.000Z',
-      endsAt: '2026-11-09T06:20:00.000Z',
-    },
-    {
-      meetingTypeId: 'another-type',
-      startsAt: '2026-11-09T07:00:00.000Z',
-      endsAt: '2026-11-09T07:30:00.000Z',
-    },
-    {
-      meetingTypeId: 'another-type',
-      startsAt: '2026-11-09T09:15:00.000Z',
-      endsAt: '2026-11-09T09:20:00.000Z',
-    },
-  ]);
+  const backend = await startCalendar('2026-11-09T05:00:00.000Z');
   try {
+    for (const [duration, startsAt] of [
+      [20, '2026-11-09T06:00:00Z'],
+      [30, '2026-11-09T07:00:00Z'],
+      [5, '2026-11-09T09:15:00Z'],
+    ] as const) {
+      const other = await publish(backend.url, duration);
+      const response = await fetch(`${backend.url}/api/bookings`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          meetingTypeId: other.id,
+          startsAt,
+          guestName: 'Другой',
+          guestEmail: 'other@example.com',
+        }),
+      });
+      expect(response.status).toBe(201);
+    }
+    await backend.setTime('2026-11-09T06:10:00.000Z');
     const item = await publish(backend.url, 30);
     const body = await jsonResponse(
       await fetch(`${backend.url}/api/meeting-types/${item.id}/slots`),
@@ -223,10 +226,9 @@ test('duration limits and non-grid duration keep the fixed start grid and exclud
 });
 
 test('an occupied entire window is a successful availability with fourteen empty dates', async () => {
-  const backend = await startCalendar('2026-11-08T12:00:00.000Z', [
-    { startsAt: '2026-11-08T00:00:00.000Z', endsAt: '2026-11-22T00:00:00.000Z' },
-  ]);
+  const backend = await startCalendar('2026-11-08T12:00:00.000Z');
   try {
+    await fillCalendarWindow(backend.url);
     const item = await publish(backend.url);
     const body = await jsonResponse(
       await fetch(`${backend.url}/api/meeting-types/${item.id}/slots`),
