@@ -1,5 +1,7 @@
 export {
   getHealth,
+  meetingTypesGetMeetingType,
+  meetingTypesGetSlots,
   meetingTypesCreateMeetingType,
   meetingTypesListMeetingTypes,
 } from './generated/sdk.gen.js';
@@ -7,6 +9,9 @@ export { client } from './generated/client.gen.js';
 export { createClient, createConfig } from './generated/client/index.js';
 export type {
   GetHealthResponse,
+  MeetingTypesGetMeetingTypeResponse,
+  MeetingTypesGetSlotsResponse,
+  Availability,
   HealthResponse,
   MeetingType,
   CreateMeetingTypeRequest,

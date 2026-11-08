@@ -6,13 +6,16 @@ import { preview } from 'vite';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 
 /** Each scenario owns a fresh genuine application and an OS-assigned port. */
-export async function startBackend(nodeArguments: string[] = []) {
+export async function startBackend(
+  nodeArguments: string[] = [],
+  environment: NodeJS.ProcessEnv = {},
+) {
   const child = spawn(
     process.execPath,
     [...nodeArguments, join(root, 'apps/backend/dist/main.js')],
     {
       cwd: root,
-      env: { ...process.env, PORT: '0' },
+      env: { ...process.env, ...environment, PORT: '0' },
       stdio: ['ignore', 'pipe', 'pipe'],
     },
   );

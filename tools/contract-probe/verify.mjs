@@ -4,6 +4,8 @@ import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import {
   getHealth,
+  meetingTypesGetMeetingType,
+  meetingTypesGetSlots,
   meetingTypesCreateMeetingType,
   meetingTypesListMeetingTypes,
 } from '@calendar/api-sdk';
@@ -38,6 +40,55 @@ const server = createServer(async (request, response) => {
   for await (const chunk of request) text += chunk;
   const body = text ? JSON.parse(text) : undefined;
   requests.push({ method: request.method, url: request.url, ...(body ? { body } : {}) });
+  if (request.method === 'GET' && request.url === `/api/meeting-types/${meetingType.id}`) {
+    response
+      .writeHead(200, { 'content-type': 'application/json' })
+      .end(JSON.stringify(meetingType));
+    return;
+  }
+  if (request.method === 'GET' && request.url === `/api/meeting-types/${meetingType.id}/slots`) {
+    const dates = [
+      '2026-11-08',
+      '2026-11-09',
+      '2026-11-10',
+      '2026-11-11',
+      '2026-11-12',
+      '2026-11-13',
+      '2026-11-14',
+      '2026-11-15',
+      '2026-11-16',
+      '2026-11-17',
+      '2026-11-18',
+      '2026-11-19',
+      '2026-11-20',
+      '2026-11-21',
+    ];
+    response.writeHead(200, { 'content-type': 'application/json' }).end(
+      JSON.stringify({
+        currentTime: '2026-11-08T12:00:00.000Z',
+        timeZone: 'Europe/Moscow',
+        windowStartDate: '2026-11-08',
+        windowEndDate: '2026-11-21',
+        days: dates.map((date) => ({
+          date,
+          slots:
+            date === '2026-11-09'
+              ? [{ startsAt: '2026-11-09T06:00:00.000Z', endsAt: '2026-11-09T06:30:00.000Z' }]
+              : [],
+        })),
+      }),
+    );
+    return;
+  }
+  if (
+    request.method === 'GET' &&
+    request.url === '/api/meeting-types/00000000-0000-4000-8000-000000000000/slots'
+  ) {
+    response
+      .writeHead(404, { 'content-type': 'application/json' })
+      .end(JSON.stringify({ code: 'MEETING_TYPE_NOT_FOUND', message: 'Тип встречи не найден.' }));
+    return;
+  }
   if (request.url === '/api/meeting-types') {
     response.setHeader('content-type', 'application/json');
     if (request.method === 'GET') {
@@ -104,7 +155,53 @@ try {
       .properties.code.enum[0],
     'VALIDATION_ERROR',
   );
-  console.log('PASS: OpenAPI 3.1, SDK GET/POST bodies, arrays and typed errors over real HTTP');
+  const read = await meetingTypesGetMeetingType({
+    baseUrl,
+    path: { id: meetingType.id },
+    throwOnError: true,
+  });
+  assert.deepEqual(read.data, meetingType);
+  const slots = await meetingTypesGetSlots({
+    baseUrl,
+    path: { id: meetingType.id },
+    throwOnError: true,
+  });
+  assert.equal(slots.data.currentTime, '2026-11-08T12:00:00.000Z');
+  assert.equal(slots.data.timeZone, 'Europe/Moscow');
+  assert.equal(slots.data.windowStartDate, '2026-11-08');
+  assert.equal(slots.data.windowEndDate, '2026-11-21');
+  assert.equal(slots.data.days.length, 14);
+  assert.deepEqual(slots.data.days[1], {
+    date: '2026-11-09',
+    slots: [{ startsAt: '2026-11-09T06:00:00.000Z', endsAt: '2026-11-09T06:30:00.000Z' }],
+  });
+  const missing = await meetingTypesGetSlots({
+    baseUrl,
+    path: { id: '00000000-0000-4000-8000-000000000000' },
+  });
+  assert.equal(missing.response.status, 404);
+  assert.equal(missing.error.code, 'MEETING_TYPE_NOT_FOUND');
+  assert.deepEqual(requests.slice(-3), [
+    { method: 'GET', url: `/api/meeting-types/${meetingType.id}` },
+    { method: 'GET', url: `/api/meeting-types/${meetingType.id}/slots` },
+    { method: 'GET', url: '/api/meeting-types/00000000-0000-4000-8000-000000000000/slots' },
+  ]);
+  for (const path of ['/api/meeting-types/{id}', '/api/meeting-types/{id}/slots']) {
+    assert.equal(spec.paths[path].get.parameters[0].name, 'id');
+    assert.equal(spec.paths[path].get.parameters[0].in, 'path');
+    assert.equal(spec.paths[path].get.parameters[0].schema.format, 'uuid');
+    assert.equal(
+      spec.paths[path].get.responses['404'].content['application/json'].schema.properties.code
+        .enum[0],
+      'MEETING_TYPE_NOT_FOUND',
+    );
+  }
+  assert.equal(spec.components.schemas.MoscowDate.format, 'date');
+  assert.equal(spec.components.schemas.UtcInstant.format, 'date-time');
+  assert.equal(spec.components.schemas.UtcInstant.pattern, 'Z$');
+  console.log(
+    'PASS: OpenAPI 3.1, SDK GET/POST bodies, UUID paths, UTC instants, Moscow dates, arrays and typed errors over real HTTP',
+  );
 } finally {
   if (server.listening) {
     await new Promise((resolve, reject) => {

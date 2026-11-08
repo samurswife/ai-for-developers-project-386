@@ -1,8 +1,10 @@
 import { ArrowRight, CalendarClock } from 'lucide-react';
+import { AvailabilityPage } from './AvailabilityPage';
 import { OwnerPage } from './OwnerPage';
 import { MeetingTypesPage } from './MeetingTypesPage';
 
 function App() {
+  const meetingTypeId = location.pathname.match(/^\/meeting-types\/([^/]+)$/)?.[1];
   return (
     <div className="home-surface min-h-svh">
       <header className="border-b border-border/70 bg-background/90">
@@ -76,6 +78,8 @@ function App() {
             <OwnerPage />
           ) : location.pathname === '/meeting-types' ? (
             <MeetingTypesPage />
+          ) : meetingTypeId ? (
+            <AvailabilityPage id={meetingTypeId} />
           ) : (
             <section className="page-panel">
               <h1 className="text-3xl font-semibold">Страница не найдена</h1>

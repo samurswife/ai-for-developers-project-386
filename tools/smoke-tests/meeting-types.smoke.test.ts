@@ -44,7 +44,9 @@ test('owner creates a meeting type and guests find its real saved data in the ca
     await page.getByRole('heading', { name: 'Знакомство', exact: true }).waitFor();
     expect(await page.getByText('Обсудим ваши планы', { exact: true }).isVisible()).toBe(true);
     expect(await page.getByText('30 мин', { exact: true }).isVisible()).toBe(true);
-    expect(await page.getByRole('button', { name: 'Выбрать время' }).isDisabled()).toBe(true);
+    expect(await page.getByRole('link', { name: 'Выбрать время' }).getAttribute('href')).toMatch(
+      /^\/meeting-types\/[0-9a-f-]+$/,
+    );
     await page.screenshot({ path: '/tmp/ticket10-catalog.png', fullPage: true });
   });
 });

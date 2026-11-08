@@ -196,3 +196,175 @@ namespace MeetingTypes {
     | ValidationError
     | InternalError;
 }
+
+/** A meeting type is no longer published or the identifier is unknown. */
+@error
+model MeetingTypeNotFound {
+  @statusCode statusCode: 404;
+  @body body: {
+    /** Machine-readable reason. */
+    @example("MEETING_TYPE_NOT_FOUND") code: "MEETING_TYPE_NOT_FOUND";
+
+    /** Human-readable explanation. */
+    @example("Тип встречи не найден.") message: string;
+
+    /** Optional field details. */
+    @example(#[]) fieldErrors?: FieldError[];
+  };
+}
+
+namespace MeetingTypes {
+  /** Read a published meeting type by its UUID. */
+  @route("/{id}")
+  @get
+  @opExample(#{
+    returnType: #{
+      statusCode: 200,
+      body: #{
+        id: "7d09f511-e6bb-4fda-8b7a-5602543d6790",
+        name: "Знакомство",
+        description: "",
+        durationMinutes: 30,
+      },
+    },
+  })
+  @opExample(#{
+    returnType: #{
+      statusCode: 400,
+      body: #{ code: "VALIDATION_ERROR", message: "Некорректный ID." },
+    },
+  })
+  @opExample(#{
+    returnType: #{
+      statusCode: 404,
+      body: #{
+        code: "MEETING_TYPE_NOT_FOUND",
+        message: "Тип встречи не найден.",
+      },
+    },
+  })
+  @opExample(#{
+    returnType: #{
+      statusCode: 500,
+      body: #{
+        code: "INTERNAL_ERROR",
+        message: "Не удалось выполнить запрос.",
+      },
+    },
+  })
+  op getMeetingType(
+    @doc("Meeting type UUID.")
+    @path
+    @format("uuid")
+    id: string,
+  ):
+    | {
+        @statusCode statusCode: 200;
+        @body body: MeetingType;
+      }
+    | ValidationError
+    | MeetingTypeNotFound
+    | InternalError;
+}
+
+/** UTC instant returned by the server. */
+@example("2026-11-09T06:00:00.000Z")
+@format("date-time")
+@pattern("Z$")
+scalar UtcInstant extends string;
+
+/** Calendar date in Europe/Moscow. */
+@example("2026-11-09")
+@format("date")
+scalar MoscowDate extends string;
+
+/** A computed, unreserved interval for a meeting. */
+model Slot {
+  /** Inclusive start, strictly after currentTime. */
+  @example("2026-11-09T06:00:00.000Z") startsAt: UtcInstant;
+
+  /** Exclusive end, calculated from the meeting duration. */
+  @example("2026-11-09T06:30:00.000Z") endsAt: UtcInstant;
+}
+
+/** One Moscow date, including dates without free intervals. */
+model AvailabilityDay {
+  /** Moscow calendar date. */
+  @example("2026-11-09") date: MoscowDate;
+
+  /** Free intervals sorted by start. */
+  @example(#[]) slots: Slot[];
+}
+
+/** All fourteen dates of the current booking window. */
+model Availability {
+  /** One server instant captured for the entire calculation. */
+  @example("2026-11-08T20:59:59.000Z") currentTime: UtcInstant;
+
+  /** Time zone for all calendar rules. */
+  @example("Europe/Moscow") timeZone: "Europe/Moscow";
+
+  /** First date, inclusive. */
+  @example("2026-11-08") windowStartDate: MoscowDate;
+
+  /** Last date, inclusive. */
+  @example("2026-11-21") windowEndDate: MoscowDate;
+
+  /** All fourteen dates in chronological order. */
+  @example(#[]) days: AvailabilityDay[];
+}
+
+namespace MeetingTypes {
+  /** Compute all free slots for a published meeting type. Selecting a slot does not reserve it. */
+  @route("/{id}/slots")
+  @get
+  @opExample(#{
+    returnType: #{
+      statusCode: 200,
+      body: #{
+        currentTime: "2026-11-08T20:59:59.000Z",
+        timeZone: "Europe/Moscow",
+        windowStartDate: "2026-11-08",
+        windowEndDate: "2026-11-21",
+        days: #[],
+      },
+    },
+  })
+  @opExample(#{
+    returnType: #{
+      statusCode: 400,
+      body: #{ code: "VALIDATION_ERROR", message: "Некорректный ID." },
+    },
+  })
+  @opExample(#{
+    returnType: #{
+      statusCode: 404,
+      body: #{
+        code: "MEETING_TYPE_NOT_FOUND",
+        message: "Тип встречи не найден.",
+      },
+    },
+  })
+  @opExample(#{
+    returnType: #{
+      statusCode: 500,
+      body: #{
+        code: "INTERNAL_ERROR",
+        message: "Не удалось выполнить запрос.",
+      },
+    },
+  })
+  op getSlots(
+    @doc("Meeting type UUID.")
+    @path
+    @format("uuid")
+    id: string,
+  ):
+    | {
+        @statusCode statusCode: 200;
+        @body body: Availability;
+      }
+    | ValidationError
+    | MeetingTypeNotFound
+    | InternalError;
+}

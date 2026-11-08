@@ -72,12 +72,12 @@ export function MeetingTypesPage() {
                   )}
                   <p className="mt-4">{item.durationMinutes} мин</p>
                   <div className="mt-auto pt-6">
-                    <Button disabled aria-describedby={`calendar-${item.id}`}>
+                    <a
+                      className="navigation-link inline-flex min-h-10 items-center rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground"
+                      href={`/meeting-types/${item.id}`}
+                    >
                       Выбрать время
-                    </Button>
-                    <p id={`calendar-${item.id}`} className="mt-2 text-sm text-muted-foreground">
-                      Раздел готовится
-                    </p>
+                    </a>
                   </div>
                 </li>
               ))}

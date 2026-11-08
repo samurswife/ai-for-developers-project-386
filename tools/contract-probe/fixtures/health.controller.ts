@@ -1,10 +1,12 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Param } from '@nestjs/common';
 import type {
   HealthControllerMethods,
   MeetingTypesControllerMethods,
 } from '@calendar/api-sdk/nestjs';
 import type {
   GetHealthResponse,
+  MeetingTypesGetMeetingTypeResponse,
+  MeetingTypesGetSlotsResponse,
   CreateMeetingTypeRequest,
   MeetingTypesCreateMeetingTypeResponse,
   MeetingTypesListMeetingTypesResponse,
@@ -24,6 +26,20 @@ export class MeetingTypesController implements MeetingTypesControllerMethods {
   @Get()
   async meetingTypesListMeetingTypes(): Promise<MeetingTypesListMeetingTypesResponse> {
     return { items: [] };
+  }
+
+  @Get(':id')
+  async meetingTypesGetMeetingType(
+    @Param() _path: { id: string },
+  ): Promise<MeetingTypesGetMeetingTypeResponse> {
+    throw new Error('Compile-only fixture');
+  }
+
+  @Get(':id/slots')
+  async meetingTypesGetSlots(
+    @Param() _path: { id: string },
+  ): Promise<MeetingTypesGetSlotsResponse> {
+    throw new Error('Compile-only fixture');
   }
 
   @Post()
