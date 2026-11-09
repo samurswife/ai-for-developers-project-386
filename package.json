@@ -21,7 +21,7 @@
     "lint:unused": "knip --no-progress",
     "lint:architecture": "depcruise --config .dependency-cruiser.cjs apps/backend/src apps/frontend/src packages/api-sdk/src tools",
     "lint:versions": "syncpack lint --dependency-types dev,prod,pnpmOverrides",
-    "lint:commits": "commitlint --from 636ea6b71be9fba1cf60975e5fce66e42d69dc57 --to HEAD",
+    "lint:commits": "node --test tools/quality/lint-commits.test.mjs && node tools/quality/lint-commits.mjs",
     "lint:openapi": "vacuum lint --no-banner --no-update-check --details --fail-severity warn specs/generated/openapi.json",
     "lint:markdown": "rumdl check",
     "scan:secrets": "betterleaks dir --redact --no-banner .",
