@@ -5,9 +5,11 @@
   "scripts": {
     "test": "vitest run",
     "test:api": "API_TESTS=1 vitest run",
+    "test:docker": "node docker.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@calendar/api-sdk": "workspace:*",
     "@types/node": "26.6.6",
     "ajv": "8.20.0",
     "playwright": "1.64.1",

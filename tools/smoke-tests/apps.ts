@@ -36,8 +36,10 @@ export async function startBackend(
       timer = setTimeout(() => reject(new Error(`Backend startup timeout:\n${output}`)), 10_000);
       const collect = (chunk: Buffer) => {
         output += chunk.toString();
-        const address = output.match(/Backend listening at (http:\/\/127\.0\.0\.1:\d+)/);
-        if (address) resolve(address[1]);
+        const address = output.match(
+          /Backend listening at (http:\/\/(?:127\.0\.0\.1|0\.0\.0\.0):\d+)/,
+        );
+        if (address) resolve(address[1].replace('://0.0.0.0:', '://127.0.0.1:'));
       };
       child.stdout.on('data', collect);
       child.stderr.on('data', collect);

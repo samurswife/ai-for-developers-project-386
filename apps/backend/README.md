@@ -10,6 +10,7 @@ mise run dev:backend
 ```
 
 Сервер слушает `127.0.0.1:3000`. Для другого порта: `PORT=3001 mise run dev:backend`. Для остановки нажмите `Ctrl+C`.
+Адрес задаётся через `HOST`; контейнер использует `HOST=0.0.0.0`.
 
 Сборка:
 
@@ -22,6 +23,9 @@ mise run build:backend
 ```sh
 mise run start:backend
 ```
+
+При `NODE_ENV=production` backend также отдаёт собранный frontend из `apps/frontend/dist`.
+Перед таким запуском выполните `mise run build:frontend`; Docker собирает оба приложения автоматически.
 
 ## Контракт
 

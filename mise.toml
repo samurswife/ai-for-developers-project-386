@@ -104,6 +104,10 @@ description = "Проверить предметный HTTP API настояще
 depends = ["build:backend"]
 run = "pnpm run test:api"
 
+[tasks."test:docker"]
+description = "Собрать Docker-образ, проверить production-сценарий, PORT и сброс данных"
+run = "pnpm --filter @calendar/smoke-tests run test:docker"
+
 [tasks.lint]
 description = "Проверить код, стили, контракты, зависимости и форматирование"
 depends = [

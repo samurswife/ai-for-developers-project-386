@@ -1,0 +1,8 @@
+# Copy to .codex/config.toml only when not using the Render plugin.
+# Authenticate with: codex mcp login render
+# OAuth credentials belong to Codex's credential store, never to this repository.
+[mcp_servers.render]
+url = "https://mcp.render.com/mcp"
+
+[mcp_servers.render.oauth]
+client_id = "codex"

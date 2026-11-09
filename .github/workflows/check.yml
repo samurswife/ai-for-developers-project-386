@@ -33,3 +33,6 @@ jobs:
 
       - name: Check project
         run: mise run check
+
+      - name: Check Docker deployment
+        run: mise run test:docker

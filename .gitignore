@@ -11,5 +11,6 @@ coverage/
 !.env.example
 mise.local.toml
 mise.local.lock
+.codex/config.toml
 /specs/generated/
 /packages/api-sdk/src/generated/
