@@ -177,9 +177,11 @@ NestJS отдаёт frontend и API на одном порту, слушая `0.
 
 ## Render и MCP
 
+Работающее приложение: [Запись на звонок](https://calendar-calls-samurswife.onrender.com).
+
 Приложение разворачивается как один Web Service на тарифе Free, runtime Docker, с контекстом сборки `.`
 и корневым `Dockerfile`. Используются `NODE_ENV=production`, `HOST=0.0.0.0` и предоставленный Render `PORT`.
-Команду запуска переопределять не нужно. Health Check Path — `/api/health`.
+Команду запуска переопределять не нужно. В Settings → Health Checks задайте Health Check Path `/api/health`.
 
 Для подключения Codex к [Render MCP](https://render.com/docs/mcp-server):
 
@@ -201,7 +203,8 @@ NestJS отдаёт frontend и API на одном порту, слушая `0.
 Для повторной браузерной проверки опубликованного сервиса:
 
 ```sh
-DEPLOYMENT_URL=https://YOUR-SERVICE.onrender.com mise exec -- pnpm --filter @calendar/smoke-tests exec vitest run production.smoke.test.ts
+DEPLOYMENT_URL=https://calendar-calls-samurswife.onrender.com \
+  mise exec -- pnpm --filter @calendar/smoke-tests exec vitest run production.smoke.test.ts
 ```
 
 Проверка создаёт тип встречи и бронирование с вымышленными данными. Перед ней дождитесь ответа `/api/health`
