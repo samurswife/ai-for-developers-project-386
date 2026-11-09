@@ -147,7 +147,10 @@ for (const failure of ['lost-response', '500'] as const) {
 test('narrow screens, keyboard controls and unknown routes remain usable', async () => {
   await scenario(async (page, url) => {
     await page.setViewportSize({ width: 320, height: 900 });
+    const session = await page.context().newCDPSession(page);
+    await session.send('Emulation.setCPUThrottlingRate', { rate: 20 });
     await page.goto(`${url}/owner`);
+    await page.getByLabel('Название').waitFor();
     for (let tab = 0; tab < 4; tab++) await page.keyboard.press('Tab');
     expect(
       await page.getByLabel('Название').evaluate((element) => element === document.activeElement),
