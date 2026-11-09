@@ -7,6 +7,8 @@ import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const cli = fileURLToPath(new URL('./lint-commits.mjs', import.meta.url));
+const repository = fileURLToPath(new URL('../../', import.meta.url));
+const historicalMerge = '18c10411923556d2f236b1802876deb85665807e';
 const longBody =
   'This integration metadata line is deliberately longer than the one hundred character limit for ordinary commit messages.';
 // Git hooks export repository settings that override cwd. Keep them out of every fixture child.
@@ -43,26 +45,62 @@ function fixture(t) {
       env: fixtureEnv,
       encoding: 'utf8',
     });
-  return { cwd, git, commit, base, lint };
+  const merge = (message) => {
+    git('checkout', '--quiet', '-b', 'feature');
+    commit('feat: add feature (#14)');
+    git('checkout', '--quiet', 'main');
+    commit('fix: prepare integration (#14)');
+    git('merge', '--quiet', '--no-ff', 'feature', '-m', message);
+    assert.equal(git('rev-list', '--parents', '-1', 'HEAD').split(' ').length, 3);
+  };
+  return { cwd, git, commit, base, lint, merge };
 }
 
-test('history lint accepts valid implementation commits and excludes actual merge metadata', (t) => {
-  const { git, commit, lint } = fixture(t);
-  git('checkout', '--quiet', '-b', 'feature');
-  commit('feat: add feature (#14)');
-  git('checkout', '--quiet', 'main');
-  commit('fix: prepare integration (#14)');
-  git(
-    'merge',
-    '--quiet',
-    '--no-ff',
-    'feature',
-    '-m',
-    `feat: integrate feature (#14)\n\n${longBody}`,
-  );
-  assert.equal(git('rev-list', '--parents', '-1', 'HEAD').split(' ').length, 3);
+test('history lint accepts valid implementation commits and merge messages', (t) => {
+  const { merge, lint } = fixture(t);
+  merge('feat: integrate feature (#14)\n\nKeep this merge description within the line limit.');
   const result = lint();
   assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test('history lint rejects a long body on another merge commit', (t) => {
+  const { merge, lint } = fixture(t);
+  merge(`feat: integrate feature (#14)\n\n${longBody}`);
+  const result = lint();
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout + result.stderr, /body-max-line-length/);
+});
+
+test('history lint rejects a default Git merge header instead of silently ignoring it', (t) => {
+  const { merge, lint } = fixture(t);
+  merge("Merge branch 'feature'");
+  const result = lint();
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout + result.stderr, /type-empty/);
+});
+
+test('history lint exempts only the published historical merge SHA', () => {
+  const result = spawnSync(
+    process.execPath,
+    [cli, '--from', `${historicalMerge}^1`, '--to', historicalMerge],
+    { cwd: repository, env: fixtureEnv, encoding: 'utf8' },
+  );
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, new RegExp(`Skipping historical exception ${historicalMerge}`));
+});
+
+test('history lint rejects the historical message copied into a different merge commit', (t) => {
+  const { merge, git, lint } = fixture(t);
+  const message = execFileSync('git', ['show', '--no-patch', '--format=%B', historicalMerge], {
+    cwd: repository,
+    env: fixtureEnv,
+    encoding: 'utf8',
+  });
+  merge(message);
+  assert.notEqual(git('rev-parse', 'HEAD'), historicalMerge);
+  const result = lint();
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout + result.stderr, /body-max-line-length/);
 });
 
 test('history lint rejects an invalid header on a single-parent implementation commit', (t) => {
@@ -85,7 +123,7 @@ test('history lint accepts an empty range', (t) => {
   const { base, lint } = fixture(t);
   const result = lint('--to', base);
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.match(result.stdout, /No non-merge commits/);
+  assert.match(result.stdout, /No commits/);
 });
 
 test('history lint rejects missing revisions', (t) => {

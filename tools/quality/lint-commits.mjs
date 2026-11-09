@@ -9,6 +9,9 @@ const { values } = parseArgs({
   },
 });
 
+// Published merge message exceeds body-max-line-length; preserve shared history.
+const historicalMerge = '18c10411923556d2f236b1802876deb85665807e';
+
 try {
   if (!values.from || !values.to)
     throw new Error('--from and --to must be non-empty Git revisions.');
@@ -20,11 +23,15 @@ try {
   }
   const commits = execFileSync(
     'git',
-    ['log', '--no-merges', '--format=%H', '--end-of-options', `${values.from}..${values.to}`, '--'],
+    ['log', '--format=%H', '--end-of-options', `${values.from}..${values.to}`, '--'],
     { encoding: 'utf8' },
   ).trim();
-  if (!commits) console.log('No non-merge commits in the selected range.');
+  if (!commits) console.log('No commits in the selected range.');
   for (const commit of commits ? commits.split('\n') : []) {
+    if (commit === historicalMerge) {
+      console.log(`Skipping historical exception ${commit} (body-max-line-length).`);
+      continue;
+    }
     const message = execFileSync('git', ['show', '--no-patch', '--format=format:%B', commit, '--']);
     execFileSync(
       process.execPath,
